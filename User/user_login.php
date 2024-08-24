@@ -3,55 +3,68 @@
 <head>
     <title>User Login</title>
     <style>
-        .login-form {
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
+        body {
+    font-family: 'Lato', sans-serif;
+    background-image: url('your-background-image.jpg'); 
+    background-size: cover;
+    background-position: center;
+}
 
-        .login-form h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+.login-form {
+    max-width: 350px; 
+    margin: 0 auto;
+    padding: 30px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.8);
+}
 
-        .login-form label {
-            display: block;
-            margin-bottom: 5px;
-        }
+.login-form h1 {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
 
-        .login-form input,
-        .login-form select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
+.login-form label {
+    font-size: 14px;
+    display: block;
+    margin-bottom: 8px;
+    color: #666;
+}
 
-        .login-form button,
-        .login-form input[type="submit"] {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-        }
+.login-form input,
+.login-form select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+}
 
-        .login-form button:hover,
-        .login-form input[type="submit"]:hover {
-            background-color: #3e8e41;
-        }
+.login-form button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 15px;
+}
 
-        .login-form p {
-            text-align: center;
-            margin-top: 10px;
-        }
+.login-form button:hover {
+    background-color: #3e8e41;
+}
+
+.login-form p {
+    text-align: center;
+    margin-top: 15px;
+    color: #888;
+}
     </style>
 </head>
 <body>
