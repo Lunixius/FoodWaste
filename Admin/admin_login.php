@@ -5,7 +5,7 @@
     <style>
         body {
             font-family: 'Lato', sans-serif;
-            background-image: url('your-background-image.jpg'); 
+            background-image: url('your-background-image.jpg');
             background-size: cover;
             background-position: center;
             margin: 0;
@@ -15,142 +15,130 @@
             justify-content: center;
             align-items: center;
             color: #333;
-            overflow: hidden; /* Prevents any overflow */
+            overflow: hidden;
         }
 
         .login-form {
-            width: 500px;  /* Adjusted width */
-            padding: 20px;  /* Reduced padding */
-            border-radius: 10px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-            background-color: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(8px);
-            border-top: 5px solid #4CAF50;
-            border-left: 5px solid #FF9800;
+            width: 480px;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(to bottom right, #ffffff 40%, #ffddc1);
+            position: relative;
         }
 
         .login-form:before {
             content: '';
             position: absolute;
-            top: -50px;
-            right: -50px;
-            width: 150px;
-            height: 150px;
-            background: #FF9800;
+            top: -40px;
+            right: -40px;
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(to bottom right, #ff9800, #f44336);
             border-radius: 50%;
-            opacity: 0.2;
+            opacity: 0.3;
         }
 
         .login-form:after {
             content: '';
             position: absolute;
-            bottom: -50px;
-            left: -50px;
-            width: 150px;
-            height: 150px;
-            background: #4CAF50;
+            bottom: -40px;
+            left: -40px;
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(to top left, #4caf50, #8bc34a);
             border-radius: 50%;
-            opacity: 0.2;
+            opacity: 0.3;
         }
 
         .login-form h1 {
-            font-size: 24px;  /* Slightly reduced font size */
+            font-size: 26px;
             text-align: center;
-            margin-bottom: 20px;  /* Reduced margin */
+            margin-bottom: 25px;
             color: #444;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
             font-weight: 700;
         }
 
         .login-form label {
-            font-size: 14px;  /* Slightly reduced font size */
+            font-size: 15px;
             display: block;
-            margin-bottom: 5px;
-            color: #666;
+            margin-bottom: 7px;
+            color: #555;
             font-weight: 500;
         }
 
-        .login-form input,
-        .login-form select {
+        .login-form input {
             width: 100%;
-            padding: 10px;  /* Reduced padding */
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            padding: 12px;
+            border: 1px solid #bbb;
+            border-radius: 8px;
             box-sizing: border-box;
-            margin-bottom: 10px;  /* Reduced margin */
-            background-color: #f7f7f7;
+            margin-bottom: 15px;
+            background-color: #f0f0f0;
             transition: all 0.3s ease;
         }
 
-        .login-form input:focus,
-        .login-form select:focus {
+        .login-form input:focus {
             background-color: #fff;
-            border-color: #4CAF50;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+            border-color: #ff9800;
+            box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
             outline: none;
         }
 
         .login-form button {
-            background-color: #4CAF50;
+            background-color: #f44336;
             color: white;
-            padding: 12px;
+            padding: 14px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             width: 100%;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
             transition: background-color 0.3s ease, box-shadow 0.3s ease;
-            margin-top: 10px;  /* Reduced margin */
+            margin-top: 15px;
         }
 
         .login-form button:hover {
-            background-color: #388E3C;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: #d32f2f;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
         .login-form p {
             text-align: center;
-            margin-top: 10px;  /* Reduced margin */
-            color: #666;
-            font-size: 14px;
+            margin-top: 15px;
+            color: #555;
+            font-size: 15px;
         }
 
         .login-form p a {
-            color: #FF9800;
+            color: #f44336;
             text-decoration: none;
             font-weight: 600;
             transition: color 0.3s ease;
         }
 
         .login-form p a:hover {
-            color: #E65100;
+            color: #d32f2f;
         }
     </style>
 </head>
 <body>
     <div class="login-form">
-        <h1>User Login</h1>
-        <form action="process_login.php" method="post">
+        <h1>Admin Login</h1>
+        <form action="admin_login.php" method="post">
             <label for="username">Username:</label>
             <input type="text" id="username" name="username" required>
 
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" required>
 
-            <label for="phone_number">Phone Number:</label>
-            <input type="tel" id="phone_number" name="phone_number" required>
-
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>
 
-            <label for="user_type">User Type:</label>
-            <select id="user_type" name="user_type" required>
-                <option value="Restaurant">Restaurant</option>
-                <option value="NGO">NGO</option>
-            </select>
-
             <button type="submit">Login</button>
-            <p><a href="user_forgot_password.php">Forgot Password?</a></p>
+            <p><a href="admin_forgot_password.php">Forgot Password?</a></p>
         </form>
     </div>
 </body>
