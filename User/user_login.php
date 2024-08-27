@@ -1,3 +1,51 @@
+<?php
+session_start();
+
+// Database connection parameters
+$servername = "localhost";
+$db_username = "root";  // Replace with your database username
+$db_password = "";  // Replace with your database password
+$dbname = "foodwaste";
+
+// Create connection
+$conn = new mysqli($servername, $db_username, $db_password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Handle form submission
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = $conn->real_escape_string($_POST['username']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $password = $conn->real_escape_string($_POST['password']);
+    $phone_number = $conn->real_escape_string($_POST['phone_number']);
+    $user_type = $conn->real_escape_string($_POST['user_type']);
+
+    // Check if the user exists
+    $sql = "SELECT * FROM user_login WHERE username = '$username' AND email = '$email' AND phone_number = '$phone_number' AND user_type = '$user_type'";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+        // User exists, verify the password
+        $user = $result->fetch_assoc();
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['user_type'] = $user['user_type'];
+            header("Location: dashboard.php");  // Redirect to the user dashboard
+            exit();
+        } else {
+            $error_message = "Invalid password.";
+        }
+    } else {
+        $error_message = "No user found with the provided details.";
+    }
+}
+$conn->close();
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -27,6 +75,7 @@
             backdrop-filter: blur(8px);
             border-top: 5px solid #4CAF50;
             border-left: 5px solid #FF9800;
+            position: relative;
         }
 
         .login-form:before {
@@ -130,7 +179,10 @@
 <body>
     <div class="login-form">
         <h1>User Login</h1>
-        <form action="process_login.php" method="post">
+        <?php if (isset($error_message)): ?>
+            <p style="color: red; text-align: center;"><?php echo $error_message; ?></p>
+        <?php endif; ?>
+        <form action="user_login.php" method="post">
             <label for="username">Username:</label>
             <input type="text" id="username" name="username" required>
 
