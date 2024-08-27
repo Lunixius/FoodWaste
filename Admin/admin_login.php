@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User Login</title>
+    <title>Admin Login</title>
     <style>
         body {
             font-family: 'Lato', sans-serif;
