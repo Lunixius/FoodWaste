@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_type = $conn->real_escape_string($_POST['user_type']);
 
     // Check if the user exists
-    $sql = "SELECT * FROM user_login WHERE username = '$username' AND email = '$email' AND phone_number = '$phone_number' AND user_type = '$user_type'";
+    $sql = "SELECT * FROM user WHERE username = '$username' AND email = '$email' AND phone_number = '$phone_number' AND user_type = '$user_type'";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {

@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
     // Insert admin data into the database
-    $sql = "INSERT INTO admin_login (username, email, password)
+    $sql = "INSERT INTO admin (username, email, password)
             VALUES ('$username', '$email', '$hashed_password')";
 
     if ($conn->query($sql) === TRUE) {
