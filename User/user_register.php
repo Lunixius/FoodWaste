@@ -15,36 +15,31 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Initialize error message
-$error_message = '';
-
+// Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $conn->real_escape_string($_POST['username']);
     $email = $conn->real_escape_string($_POST['email']);
     $password = $conn->real_escape_string($_POST['password']);
+    $phone_number = $conn->real_escape_string($_POST['phone_number']);
     $user_type = $conn->real_escape_string($_POST['user_type']);
 
-    // Hash the password before storing it
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-    // Check if the user exists
-    $sql = "SELECT * FROM user WHERE username = '$username' AND email = '$email' AND user_type = '$user_type'";
+    // Check if the username or email already exists
+    $sql = "SELECT * FROM user WHERE username = '$username' OR email = '$email'";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
-        // User exists, verify the password
-        $user = $result->fetch_assoc();
-        if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['user_type'] = $user['user_type'];
-            header("Location: dashboard.php");  // Redirect to the user dashboard
-            exit();
-        } else {
-            $error_message = "Incorrect info.";
-        }
+        $error_message = "Username or Email already exists.";
     } else {
-        $error_message = "Incorrect info.";
+        // Hash the password
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+        // Insert the new user into the database
+        $sql = "INSERT INTO user (username, email, password, phone_number, user_type) VALUES ('$username', '$email', '$hashed_password', '$phone_number', '$user_type')";
+        if ($conn->query($sql) === TRUE) {
+            $success_message = "Registration successful! You can now <a href='user_login.php'>login</a>.";
+        } else {
+            $error_message = "Error: " . $sql . "<br>" . $conn->error;
+        }
     }
 }
 $conn->close();
@@ -53,7 +48,7 @@ $conn->close();
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User Login</title>
+    <title>User Registration</title>
     <style>
         body {
             font-family: 'Lato', sans-serif;
@@ -70,7 +65,7 @@ $conn->close();
             overflow: hidden; /* Prevents any overflow */
         }
 
-        .login-form {
+        .register-form {
             width: 500px;  /* Adjusted width */
             padding: 20px;  /* Reduced padding */
             border-radius: 10px;
@@ -82,7 +77,7 @@ $conn->close();
             position: relative;
         }
 
-        .login-form:before {
+        .register-form:before {
             content: '';
             position: absolute;
             top: -50px;
@@ -94,7 +89,7 @@ $conn->close();
             opacity: 0.2;
         }
 
-        .login-form:after {
+        .register-form:after {
             content: '';
             position: absolute;
             bottom: -50px;
@@ -106,7 +101,7 @@ $conn->close();
             opacity: 0.2;
         }
 
-        .login-form h1 {
+        .register-form h1 {
             font-size: 24px;  /* Slightly reduced font size */
             text-align: center;
             margin-bottom: 20px;  /* Reduced margin */
@@ -114,7 +109,7 @@ $conn->close();
             font-weight: 700;
         }
 
-        .login-form label {
+        .register-form label {
             font-size: 14px;  /* Slightly reduced font size */
             display: block;
             margin-bottom: 5px;
@@ -122,8 +117,8 @@ $conn->close();
             font-weight: 500;
         }
 
-        .login-form input,
-        .login-form select {
+        .register-form input,
+        .register-form select {
             width: 100%;
             padding: 10px;  /* Reduced padding */
             border: 1px solid #ccc;
@@ -134,23 +129,15 @@ $conn->close();
             transition: all 0.3s ease;
         }
 
-        .login-form input:focus,
-        .login-form select:focus {
+        .register-form input:focus,
+        .register-form select:focus {
             background-color: #fff;
             border-color: #4CAF50;
             box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
             outline: none;
         }
 
-        .error-message {
-            color: red;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .login-form button {
+        .register-form button {
             background-color: #4CAF50;
             color: white;
             padding: 12px;
@@ -164,42 +151,48 @@ $conn->close();
             margin-top: 10px;  /* Reduced margin */
         }
 
-        .login-form button:hover {
+        .register-form button:hover {
             background-color: #388E3C;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .login-form p {
+        .register-form p {
             text-align: center;
             margin-top: 10px;  /* Reduced margin */
             color: #666;
             font-size: 14px;
         }
 
-        .login-form p a {
+        .register-form p a {
             color: #FF9800;
             text-decoration: none;
             font-weight: 600;
             transition: color 0.3s ease;
         }
 
-        .login-form p a:hover {
+        .register-form p a:hover {
             color: #E65100;
         }
     </style>
 </head>
 <body>
-    <div class="login-form">
-        <h1>User Login</h1>
-        <?php if (!empty($error_message)): ?>
-            <div class="error-message"><?php echo $error_message; ?></div>
+    <div class="register-form">
+        <h1>User Registration</h1>
+        <?php if (isset($error_message)): ?>
+            <p style="color: red; text-align: center;"><?php echo $error_message; ?></p>
         <?php endif; ?>
-        <form action="user_login.php" method="post">
+        <?php if (isset($success_message)): ?>
+            <p style="color: green; text-align: center;"><?php echo $success_message; ?></p>
+        <?php endif; ?>
+        <form action="user_register.php" method="post">
             <label for="username">Username:</label>
             <input type="text" id="username" name="username" required>
 
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" required>
+
+            <label for="phone_number">Phone Number:</label>
+            <input type="tel" id="phone_number" name="phone_number" required>
 
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>
@@ -210,9 +203,8 @@ $conn->close();
                 <option value="NGO">NGO</option>
             </select>
 
-            <button type="submit">Login</button>
-            <p><a href="user_register.php">Register</a></p>
-            <p><a href="user_forgot_password.php">Forgot Password?</a></p>
+            <button type="submit">Register</button>
+            <p><a href="user_login.php">Already have an account? Login</a></p>
         </form>
     </div>
 </body>
