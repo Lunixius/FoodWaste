@@ -86,21 +86,21 @@ include 'navbar.php'; // Include the navigation bar
         <div class="section">
             <h2>Donation</h2>
             <div class="section-content">
-                <a href="donation.php">Make a Donation</a>
+                <a href="donation.php">Make Donation</a>
             </div>
         </div>
 
         <div class="section">
             <h2>Contacts</h2>
             <div class="section-content">
-                <a href="contacts.php">Contact Us</a>
+                <a href="contacts.php">Contact </a>
             </div>
         </div>
 
         <div class="section">
             <h2>Delivery</h2>
             <div class="section-content">
-                <a href="delivery.php">Track Your Delivery</a>
+                <a href="delivery.php">Delivery</a>
             </div>
         </div>
     </div>
