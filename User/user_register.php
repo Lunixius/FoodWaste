@@ -36,7 +36,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Insert the new user into the database
         $sql = "INSERT INTO user (username, email, password, phone_number, user_type) VALUES ('$username', '$email', '$hashed_password', '$phone_number', '$user_type')";
         if ($conn->query($sql) === TRUE) {
-            $success_message = "Registration successful! You can now <a href='user_login.php'>login</a>.";
+            header("Location: user_verification.php");
+            exit();
         } else {
             $error_message = "Error: " . $sql . "<br>" . $conn->error;
         }
