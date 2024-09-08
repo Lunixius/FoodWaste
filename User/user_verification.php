@@ -15,7 +15,13 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Assume the registered email is stored in a session variable
+// Ensure the user is coming from the registration process
+if (!isset($_SESSION['registered_email'])) {
+    header("Location: user_register.php");  // Redirect back if no email in session
+    exit();
+}
+
+// Retrieve the registered email from the session
 $registered_email = $_SESSION['registered_email'];
 
 $verification_code = "";
@@ -44,12 +50,33 @@ if (isset($_POST['confirm_code'])) {
     $input_code = $conn->real_escape_string($_POST['verification_code']);
     
     if ($input_code == $_SESSION['verification_code']) {
-        // Correct code, redirect to login
-        header("Location: user_login.php");
-        exit();
+        // Correct code, now finalize registration by inserting into the database
+        $registration_data = $_SESSION['registration_data'];
+        $username = $registration_data['username'];
+        $email = $registration_data['email'];
+        $phone_number = $registration_data['phone_number'];
+        $hashed_password = $registration_data['password'];
+        $user_type = $registration_data['user_type'];
+
+        // Insert into the database
+        $sql = "INSERT INTO user (username, email, phone_number, password, user_type)
+                VALUES ('$username', '$email', '$phone_number', '$hashed_password', '$user_type')";
+        
+        if ($conn->query($sql) === TRUE) {
+            // Unset session variables after successful registration
+            unset($_SESSION['registration_data']);
+            unset($_SESSION['registered_email']);
+            unset($_SESSION['verification_code']);
+
+            // Redirect to login page
+            header("Location: user_login.php");
+            exit();
+        } else {
+            $error_message = "Error: " . $sql . "<br>" . $conn->error;
+        }
     } else {
         // Incorrect code
-        $error_message = "Incorrect code.";
+        $error_message = "Incorrect verification code.";
     }
 }
 
@@ -138,7 +165,7 @@ $conn->close();
             color: green;
             margin-bottom: 10px;
         }
-    </style>
+    </style>      
     <script>
         function startCooldown() {
             const button = document.getElementById('send-code-btn');
@@ -161,7 +188,7 @@ $conn->close();
 <body>
     <div class="verification-form">
         <h1>Email Verification</h1>
-        <p>Confirm to send a 6-digit verification code to your email. <?php echo $registered_email; ?></p>
+        <p>We have sent a 6-digit verification code to your email: <?php echo htmlspecialchars($registered_email); ?></p>
         <?php if (!empty($error_message)): ?>
             <div class="error-message"><?php echo $error_message; ?></div>
         <?php endif; ?>

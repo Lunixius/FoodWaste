@@ -1,7 +1,67 @@
+<?php
+session_start();
+
+// Database connection parameters
+$servername = "localhost";
+$db_username = "root";  // Replace with your database username
+$db_password = "";  // Replace with your database password
+$dbname = "foodwaste";
+
+// Create connection
+$conn = new mysqli($servername, $db_username, $db_password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$error_message = '';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = $conn->real_escape_string($_POST['username']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $phone_number = $conn->real_escape_string($_POST['phone_number']);
+    $password = $conn->real_escape_string($_POST['password']);
+    $confirm_password = $conn->real_escape_string($_POST['confirm_password']);
+    $user_type = $conn->real_escape_string($_POST['user_type']);
+
+    // Check if passwords match
+    if ($password != $confirm_password) {
+        $error_message = "Passwords do not match.";
+    } else {
+        // Check if the email or username already exists
+        $check_sql = "SELECT * FROM user WHERE email = '$email' OR username = '$username'";
+        $check_result = $conn->query($check_sql);
+
+        if ($check_result->num_rows > 0) {
+            $error_message = "Username or email already taken.";
+        } else {
+            // Store the user details in the session until they verify the code
+            $_SESSION['registration_data'] = [
+                'username' => $username,
+                'email' => $email,
+                'phone_number' => $phone_number,
+                'password' => password_hash($password, PASSWORD_DEFAULT),  // Store hashed password
+                'user_type' => $user_type,
+            ];
+
+            // Redirect to the verification page
+            $_SESSION['registered_email'] = $email; // Store email for verification
+            header("Location: user_verification.php");
+            exit();
+        }
+    }
+}
+
+$conn->close();
+?>
+
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>User Registration</title>
+    <style>
     <style>
         body {
             font-family: 'Lato', sans-serif;
@@ -143,14 +203,15 @@
         }
 
     </style>
+    </style>
 </head>
 <body>
     <div class="register-container">
         <h1>User Registration</h1>
-        <?php if (isset($error_message)): ?>
+        <?php if (!empty($error_message)): ?>
             <p style="color: red; text-align: center;"><?php echo $error_message; ?></p>
         <?php endif; ?>
-        <?php if (isset($success_message)): ?>
+        <?php if (!empty($success_message)): ?>
             <p style="color: green; text-align: center;"><?php echo $success_message; ?></p>
         <?php endif; ?>
         <form action="user_register.php" method="post">
