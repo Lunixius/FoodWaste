@@ -19,16 +19,22 @@ if ($conn->connect_error) {
 $error_message = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $conn->real_escape_string($_POST['username']);
-    $email = $conn->real_escape_string($_POST['email']);
+    $input = $conn->real_escape_string($_POST['username_or_email']);
     $password = $conn->real_escape_string($_POST['password']);
     $user_type = $conn->real_escape_string($_POST['user_type']);
 
     // Hash the password before storing it
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    // Check if the user exists
-    $sql = "SELECT * FROM user WHERE username = '$username' AND email = '$email' AND user_type = '$user_type'";
+    // Check if the input is an email or a username, and build the query accordingly
+    if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
+        // Input is an email
+        $sql = "SELECT * FROM user WHERE email = '$input' AND user_type = '$user_type'";
+    } else {
+        // Input is a username
+        $sql = "SELECT * FROM user WHERE username = '$input' AND user_type = '$user_type'";
+    }
+
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
@@ -195,11 +201,8 @@ $conn->close();
             <div class="error-message"><?php echo $error_message; ?></div>
         <?php endif; ?>
         <form action="user_login.php" method="post">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
-
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+            <label for="username_or_email">Username/Email:</label>
+            <input type="text" id="username_or_email" name="username_or_email" required>
 
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>
