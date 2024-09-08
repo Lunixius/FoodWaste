@@ -62,7 +62,6 @@ $conn->close();
 <head>
     <title>User Registration</title>
     <style>
-    <style>
         body {
             font-family: 'Lato', sans-serif;
             background-image: url('your-background-image.jpg');
@@ -202,7 +201,6 @@ $conn->close();
             color: #E65100;
         }
 
-    </style>
     </style>
 </head>
 <body>
