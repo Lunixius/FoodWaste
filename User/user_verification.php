@@ -30,11 +30,12 @@ $error_message = "";
 
 // Function to send a 6-digit verification code to the registered email
 function sendVerificationCode($email) {
-    $code = rand(100000, 999999);
-    $_SESSION['verification_code'] = $code;
+    $code = rand(100000, 999999);  // Generate a random 6-digit code
+    $_SESSION['verification_code'] = $code;  // Store code in the session
 
-    // Mail the code (for demonstration purposes, this function just stores the code)
-    mail($email, "Your Verification Code", "Your 6-digit verification code is: $code");
+    // For demo purposes, instead of actually sending an email, we're simulating it
+    // Uncomment the next line to send the email when on a live server with mail configured
+    // mail($email, "Your Verification Code", "Your 6-digit verification code is: $code");
 
     return $code;
 }
@@ -49,7 +50,7 @@ if (isset($_POST['send_code'])) {
 if (isset($_POST['confirm_code'])) {
     $input_code = $conn->real_escape_string($_POST['verification_code']);
     
-    if ($input_code == $_SESSION['verification_code']) {
+    if (isset($_SESSION['verification_code']) && $input_code == $_SESSION['verification_code']) {
         // Correct code, now finalize registration by inserting into the database
         $registration_data = $_SESSION['registration_data'];
         $username = $registration_data['username'];
@@ -195,12 +196,13 @@ $conn->close();
         <?php if (!empty($success_message)): ?>
             <div class="success-message"><?php echo $success_message; ?></div>
         <?php endif; ?>
+        <!-- "Send Code" button should appear first -->
+        <form method="post" action="user_verification.php">
+            <button type="submit" name="send_code" id="send-code-btn" class="send-code-btn" onclick="startCooldown()">Send Code</button>
+        </form>
         <form method="post" action="user_verification.php">
             <input type="text" name="verification_code" placeholder="Enter your verification code" required>
             <button type="submit" name="confirm_code" class="confirm-btn">Confirm</button>
-        </form>
-        <form method="post" action="user_verification.php">
-            <button type="submit" name="send_code" id="send-code-btn" class="send-code-btn" onclick="startCooldown()">Send Code</button>
         </form>
     </div>
 </body>
