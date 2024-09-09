@@ -33,9 +33,7 @@ function sendVerificationCode($email) {
     $code = rand(100000, 999999);  // Generate a random 6-digit code
     $_SESSION['verification_code'] = $code;  // Store code in the session
 
-    // For demo purposes, instead of actually sending an email, we're simulating it
-    // Uncomment the next line to send the email when on a live server with mail configured
-    // mail($email, "Your Verification Code", "Your 6-digit verification code is: $code");
+    mail($email, "Food Waste: Verification Code", "Your 6-digit verification code is: $code");
 
     return $code;
 }
