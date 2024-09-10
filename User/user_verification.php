@@ -28,20 +28,52 @@ $verification_code = "";
 $success_message = "";
 $error_message = "";
 
+// Include PHPMailer files
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require '../phpmailer/PHPMailerAutoload.php';  // Adjust the path if needed
+
 // Function to send a 6-digit verification code to the registered email
 function sendVerificationCode($email) {
     $code = rand(100000, 999999);  // Generate a random 6-digit code
     $_SESSION['verification_code'] = $code;  // Store code in the session
 
-    mail($email, "Food Waste: Verification Code", "Your 6-digit verification code is: $code");
+    $mail = new PHPMailer(true);
 
-    return $code;
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.example.com';  // Replace with your SMTP server
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'your-email@example.com';  // Your email
+        $mail->Password   = 'your-email-password';   // Your email password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        // Recipients
+        $mail->setFrom('your-email@example.com', 'FoodWaste');
+        $mail->addAddress($email);
+
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = 'Your Verification Code';
+        $mail->Body    = "Your 6-digit verification code is: $code";
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        return false;
+    }
 }
 
 // Handle send code request
 if (isset($_POST['send_code'])) {
-    sendVerificationCode($registered_email);
-    $success_message = "Verification code has been sent to your email.";
+    if (sendVerificationCode($registered_email)) {
+        $success_message = "Verification code has been sent to your email.";
+    } else {
+        $error_message = "Failed to send the verification code. Please try again.";
+    }
 }
 
 // Handle confirmation request
