@@ -28,44 +28,51 @@ $verification_code = "";
 $success_message = "";
 $error_message = "";
 
-// Include PHPMailer files
+// Include PHPMailer classes
+require '../phpmailer/PHPMailer/src/Exception.php';
+require '../phpmailer/PHPMailer/src/PHPMailer.php';
+require '../phpmailer/PHPMailer/src/SMTP.php';
+
+// Use PHPMailer classes
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
 
-require '../phpmailer/PHPMailerAutoload.php';  // Adjust the path if needed
 
-// Function to send a 6-digit verification code to the registered email
 function sendVerificationCode($email) {
     $code = rand(100000, 999999);  // Generate a random 6-digit code
     $_SESSION['verification_code'] = $code;  // Store code in the session
 
+    // Create an instance of PHPMailer
     $mail = new PHPMailer(true);
 
     try {
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.example.com';  // Replace with your SMTP server
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'your-email@example.com';  // Your email
-        $mail->Password   = 'your-email-password';   // Your email password
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        //Server settings
+        $mail->isSMTP();                                      // Send using SMTP
+        $mail->Host       = 'smtp.example.com';               // Set the SMTP server to send through
+        $mail->SMTPAuth   = true;                             // Enable SMTP authentication
+        $mail->Username   = 'your-email@example.com';         // SMTP username
+        $mail->Password   = 'your-email-password';            // SMTP password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;   // Enable TLS encryption
+        $mail->Port       = 587;                              // TCP port to connect to
 
-        // Recipients
-        $mail->setFrom('your-email@example.com', 'FoodWaste');
-        $mail->addAddress($email);
+        //Recipients
+        $mail->setFrom('from@example.com', 'Mailer');
+        $mail->addAddress($email);                            // Add a recipient
 
         // Content
-        $mail->isHTML(true);
-        $mail->Subject = 'Your Verification Code';
+        $mail->isHTML(true);                                  // Set email format to HTML
+        $mail->Subject = 'Food Waste: Verification Code';
         $mail->Body    = "Your 6-digit verification code is: $code";
 
         $mail->send();
-        return true;
     } catch (Exception $e) {
-        return false;
+        echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
     }
+
+    return $code;
 }
+
 
 // Handle send code request
 if (isset($_POST['send_code'])) {
