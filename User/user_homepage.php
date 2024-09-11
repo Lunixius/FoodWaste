@@ -72,15 +72,6 @@
 <body>
     <!-- Navigation Bar -->
     <?php include 'navbar.php'; ?>
-
-            <!-- Profile Icon -->
-            <div class="profile-icon dropdown">
-                <i class="fa-solid fa-user" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false"></i>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown" id="profileMenu">
-                    <!-- Content will be updated by JavaScript -->
-                </ul>
-            </div>
-        </div>
     </nav>
 
     <!-- Main Content -->
