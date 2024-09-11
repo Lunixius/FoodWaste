@@ -36,26 +36,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($check_result->num_rows > 0) {
             $error_message = "Username or email already taken.";
         } else {
-            // Store the user details in the session until they verify the code
-            $_SESSION['registration_data'] = [
-                'username' => $username,
-                'email' => $email,
-                'phone_number' => $phone_number,
-                'password' => password_hash($password, PASSWORD_DEFAULT),  // Store hashed password
-                'user_type' => $user_type,
-            ];
-
-            // Redirect to the verification page
-            $_SESSION['registered_email'] = $email; // Store email for verification
-            header("Location: user_verification.php");
-            exit();
+            // Store the user details in the database
+            $insert_sql = "INSERT INTO user (username, email, phone_number, password, user_type) 
+                           VALUES ('$username', '$email', '$phone_number', '".password_hash($password, PASSWORD_DEFAULT)."', '$user_type')";
+            if ($conn->query($insert_sql) === TRUE) {
+                // Redirect to login page
+                header("Location: user_login.php");
+                exit();
+            } else {
+                $error_message = "Error: " . $conn->error;
+            }
         }
     }
 }
 
 $conn->close();
 ?>
-
 
 <!DOCTYPE html>
 <html>
@@ -208,9 +204,6 @@ $conn->close();
         <h1>User Registration</h1>
         <?php if (!empty($error_message)): ?>
             <p style="color: red; text-align: center;"><?php echo $error_message; ?></p>
-        <?php endif; ?>
-        <?php if (!empty($success_message)): ?>
-            <p style="color: green; text-align: center;"><?php echo $success_message; ?></p>
         <?php endif; ?>
         <form action="user_register.php" method="post">
             <label for="username">Username:</label>

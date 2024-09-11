@@ -19,23 +19,23 @@ if ($conn->connect_error) {
 $error_message = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $input = $conn->real_escape_string($_POST['username_or_email']);
-    $password = $conn->real_escape_string($_POST['password']);
-    $user_type = $conn->real_escape_string($_POST['user_type']);
+    $input = $_POST['username_or_email'];
+    $password = $_POST['password'];
+    $user_type = $_POST['user_type'];
 
-    // Hash the password before storing it
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-    // Check if the input is an email or a username, and build the query accordingly
+    // Check if the input is an email or a username, and prepare the query accordingly
     if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
         // Input is an email
-        $sql = "SELECT * FROM user WHERE email = '$input' AND user_type = '$user_type'";
+        $stmt = $conn->prepare("SELECT * FROM user WHERE email = ? AND user_type = ?");
     } else {
         // Input is a username
-        $sql = "SELECT * FROM user WHERE username = '$input' AND user_type = '$user_type'";
+        $stmt = $conn->prepare("SELECT * FROM user WHERE username = ? AND user_type = ?");
     }
 
-    $result = $conn->query($sql);
+    // Bind parameters and execute the statement
+    $stmt->bind_param("ss", $input, $user_type);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
         // User exists, verify the password
@@ -44,7 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['user_type'] = $user['user_type'];
-            header("Location: dashboard.php");  // Redirect to the user dashboard
+            header("Location: user_homepage.php");  // Redirect to the user dashboard
             exit();
         } else {
             $error_message = "Incorrect info.";
@@ -52,9 +52,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $error_message = "Incorrect info.";
     }
+
+    $stmt->close();
 }
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html>

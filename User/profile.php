@@ -3,7 +3,7 @@ session_start();
 require 'connection.php'; // Include your database connection file
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: user_login.php');
     exit();
 }
 
