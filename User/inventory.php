@@ -82,19 +82,41 @@ $inventory_result = $inventory_query->get_result();
             padding: 5px;
             border-radius: 5px;
         }
+        .filter-bar {
+            margin-bottom: 20px;
+        }
+        .search-box {
+            width: 60%;
+            float: left;
+        }
+        .filter-box {
+            width: 20%;
+            float: right;
+        }
     </style>
 </head>
 <body>
     <!-- Navigation Bar -->
     <?php include 'navbar.php'; ?>
-    </nav>
 
     <div class="container">
         <h2>Restaurant Inventory</h2>
 
+        <!-- Filter and Search Bar -->
+        <div class="filter-bar">
+            <input type="text" id="search" class="form-control search-box" placeholder="Search by name, category, or description...">
+            <select id="category-filter" class="form-select filter-box">
+                <option value="">All Categories</option>
+                <option value="Fruits">Fruits</option>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Dairy">Dairy</option>
+                <!-- Add more categories as needed -->
+            </select>
+        </div>
+
         <a href="add.php" class="btn btn-success add-button">Add Entity</a>
 
-        <table class="table table-bordered">
+        <table class="table table-bordered" id="inventory-table">
             <thead>
                 <tr>
                     <th>Entity ID</th>
@@ -110,7 +132,7 @@ $inventory_result = $inventory_query->get_result();
             </thead>
             <tbody>
                 <?php while ($row = $inventory_result->fetch_assoc()): ?>
-                    <tr>
+                    <tr class="inventory-row" data-category="<?php echo htmlspecialchars($row['category']); ?>">
                         <td><?php echo htmlspecialchars($row['id']); ?></td>
                         <td><?php echo htmlspecialchars($row['name']); ?></td>
                         <td><?php echo htmlspecialchars($row['category']); ?></td>
@@ -142,6 +164,36 @@ $inventory_result = $inventory_query->get_result();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Search Functionality
+        document.getElementById('search').addEventListener('input', function() {
+            var searchValue = this.value.toLowerCase();
+            var rows = document.querySelectorAll('.inventory-row');
+            rows.forEach(function(row) {
+                var name = row.cells[1].innerText.toLowerCase();
+                var category = row.cells[2].innerText.toLowerCase();
+                var description = row.cells[3].innerText.toLowerCase();
+                if (name.includes(searchValue) || category.includes(searchValue) || description.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Category Filter
+        document.getElementById('category-filter').addEventListener('change', function() {
+            var selectedCategory = this.value.toLowerCase();
+            var rows = document.querySelectorAll('.inventory-row');
+            rows.forEach(function(row) {
+                var category = row.getAttribute('data-category').toLowerCase();
+                if (selectedCategory === '' || category === selectedCategory) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
-
