@@ -113,7 +113,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <form method="post" action="user_profile.php">
             <!-- Hashtag ID (Non-modifiable) -->
             <div class="form-group">
-                <label for="user_id" class="form-label">Hashtag ID</label>
+                <label for="user_id" class="form-label">ID</label>
                 <input type="text" class="form-control" id="user_id" value="<?php echo htmlspecialchars('#' . $user['id']); ?>" readonly>
             </div>
 
