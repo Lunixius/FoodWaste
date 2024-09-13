@@ -163,50 +163,55 @@ $inventory_result = $inventory_query->get_result();
         <a href="add.php" class="btn btn-success add-button">Add Entity</a>
 
         <table class="table table-bordered" id="inventory-table">
-            <thead>
-                <tr>
-                    <th>Entity ID</th>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Description</th>
-                    <th>Picture</th>
-                    <th>Donor</th>
-                    <th>Date Created</th>
-                    <th>Last Modified</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($row = $inventory_result->fetch_assoc()): ?>
-                    <tr class="inventory-row" data-category="<?php echo htmlspecialchars($row['category']); ?>">
-                        <td><?php echo htmlspecialchars($row['id']); ?></td>
-                        <td><?php echo htmlspecialchars($row['name']); ?></td>
-                        <td><?php echo htmlspecialchars($row['category']); ?></td>
-                        <td><?php echo htmlspecialchars($row['description']); ?></td>
-                        <td>
-                            <?php if (!empty($row['picture'])): ?>
-                                <img src="uploads/<?php echo htmlspecialchars($row['picture']); ?>" alt="Image" class="inventory-image clickable-image">
-                            <?php else: ?>
-                                No picture
-                            <?php endif; ?>
-                        </td>
-                        <td><?php echo htmlspecialchars($row['donor']); ?></td>
-                        <td><?php echo htmlspecialchars($row['date_created']); ?></td>
-                        <td><?php echo htmlspecialchars($row['last_modified']); ?></td>
-                        <td>
-                            <?php if ($row['donor'] == $username): ?>
-                                <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm">Edit</a>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-                <?php if ($inventory_result->num_rows == 0): ?>
-                    <tr>
-                        <td colspan="9" class="text-center">No inventory added yet.</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+    <thead>
+        <tr>
+            <th>Entity ID</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Picture</th>
+            <th>Donor</th>
+            <th>Date Created</th>
+            <th>Last Modified</th>
+            <th>Check</th> <!-- New "Check" column -->
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php while ($row = $inventory_result->fetch_assoc()): ?>
+            <tr class="inventory-row" data-category="<?php echo htmlspecialchars($row['category']); ?>">
+                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                <td><?php echo htmlspecialchars($row['name']); ?></td>
+                <td><?php echo htmlspecialchars($row['category']); ?></td>
+                <td><?php echo htmlspecialchars($row['description']); ?></td>
+                <td>
+                    <?php if (!empty($row['picture'])): ?>
+                        <img src="uploads/<?php echo htmlspecialchars($row['picture']); ?>" alt="Image" class="inventory-image clickable-image">
+                    <?php else: ?>
+                        No picture
+                    <?php endif; ?>
+                </td>
+                <td><?php echo htmlspecialchars($row['donor']); ?></td>
+                <td><?php echo htmlspecialchars($row['date_created']); ?></td>
+                <td><?php echo htmlspecialchars($row['last_modified']); ?></td>
+                <td>
+                    <a href="info.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-info btn-sm">Info</a> <!-- New Info button -->
+                </td>
+                <td>
+                    <?php if ($row['donor'] == $username): ?>
+                        <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm">Edit</a>
+                    <?php endif; ?>
+                </td>
+            </tr>
+        <?php endwhile; ?>
+        <?php if ($inventory_result->num_rows == 0): ?>
+            <tr>
+                <td colspan="10" class="text-center">No inventory added yet.</td> <!-- Updated colspan to 10 -->
+            </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
 
         <!-- Full-screen image modal -->
         <div id="image-modal">
