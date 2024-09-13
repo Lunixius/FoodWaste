@@ -84,15 +84,55 @@ $inventory_result = $inventory_query->get_result();
         }
         .filter-bar {
             margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px; /* Adds space between the search bar, filter, and button */
         }
+
         .search-box {
-            width: 60%;
-            float: left;
+            flex: 3; /* Occupies more width */
         }
+
         .filter-box {
-            width: 20%;
-            float: right;
+            flex: 1; /* Occupies less width than search box */
         }
+
+        .add-button {
+            margin-left: 10px;
+            flex: 1;
+        }
+
+            /* Style for images in the table */
+        .inventory-image {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            padding: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Full-screen modal image */
+        #image-modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        #image-modal img {
+            display: block;
+            margin: auto;
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
     </style>
 </head>
 <body>
@@ -104,13 +144,19 @@ $inventory_result = $inventory_query->get_result();
 
         <!-- Filter and Search Bar -->
         <div class="filter-bar">
-            <input type="text" id="search" class="form-control search-box" placeholder="Search by name, category, or description...">
-            <select id="category-filter" class="form-select filter-box">
+            <input type="text" id="search" class="form-control search-box" placeholder="Search by name...">
+            <button id="search-btn" class="btn btn-primary" style="margin-top: 10px;">Search...</button>
+    
+            <select id="category-filter" class="form-select filter-box" style="width: 200px;">
                 <option value="">All Categories</option>
-                <option value="Fruits">Fruits</option>
-                <option value="Vegetables">Vegetables</option>
-                <option value="Dairy">Dairy</option>
-                <!-- Add more categories as needed -->
+                <option value="Fruits and Vegetables">Fruits and Vegetables</option>
+               <option value="Dairy Products">Dairy Products</option>
+                <option value="Meat and Fish">Meat and Fish</option>
+                <option value="Grains and Cereals">Grains and Cereals</option>
+                <option value="Baked Goods">Baked Goods</option>
+                <option value="Prepared Foods">Prepared Foods</option>
+                <option value="Beverages">Beverages</option>
+                <option value="Condiments and Sauces">Condiments and Sauces</option>
             </select>
         </div>
 
@@ -139,7 +185,7 @@ $inventory_result = $inventory_query->get_result();
                         <td><?php echo htmlspecialchars($row['description']); ?></td>
                         <td>
                             <?php if (!empty($row['picture'])): ?>
-                                <img src="uploads/<?php echo htmlspecialchars($row['picture']); ?>" alt="Image" class="inventory-image">
+                                <img src="uploads/<?php echo htmlspecialchars($row['picture']); ?>" alt="Image" class="inventory-image clickable-image">
                             <?php else: ?>
                                 No picture
                             <?php endif; ?>
@@ -161,6 +207,11 @@ $inventory_result = $inventory_query->get_result();
                 <?php endif; ?>
             </tbody>
         </table>
+
+        <!-- Full-screen image modal -->
+        <div id="image-modal">
+            <img src="" alt="Full Screen Image">
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -181,7 +232,23 @@ $inventory_result = $inventory_query->get_result();
             });
         });
 
-        // Category Filter
+        // Search by name when "Search..." button is clicked
+        document.getElementById('search-btn').addEventListener('click', function() {
+            var searchValue = document.getElementById('search').value.toLowerCase();
+            var rows = document.querySelectorAll('.inventory-row');
+    
+                rows.forEach(function(row) {
+                var name = row.cells[1].innerText.toLowerCase(); // Name is in the second cell (index 1)
+                if (name.includes(searchValue)) {
+                    row.style.display = '';  // Show rows where the name matches the search term
+                } else {
+                    row.style.display = 'none';  // Hide rows that don't match
+                }
+            );
+        });
+
+
+        // Category Filter Functionality
         document.getElementById('category-filter').addEventListener('change', function() {
             var selectedCategory = this.value.toLowerCase();
             var rows = document.querySelectorAll('.inventory-row');
@@ -194,6 +261,32 @@ $inventory_result = $inventory_query->get_result();
                 }
             });
         });
+
+        // JavaScript to handle image click and open modal
+        document.querySelectorAll('.clickable-image').forEach(function(image) {
+            image.addEventListener('click', function() {
+                var src = this.getAttribute('src');
+                var modal = document.getElementById('image-modal');
+                var modalImg = modal.querySelector('img');
+                modalImg.setAttribute('src', src);
+                modal.style.display = 'block';
+            });
+        });
+
+        // Close the modal when clicking outside the image or pressing "ESC"
+        document.addEventListener('click', function(event) {
+            var modal = document.getElementById('image-modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                document.getElementById('image-modal').style.display = 'none';
+            }
+        });
+
     </script>
 </body>
 </html>
