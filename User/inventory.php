@@ -23,11 +23,11 @@ if (!isset($_SESSION['user_id'])) {
 
 // Fetch user info
 $user_id = $_SESSION['user_id'];
-$query = $conn->prepare("SELECT username, user_type FROM user WHERE id = ?");
-$query->bind_param("i", $user_id);
-$query->execute();
-$result = $query->get_result();
-$user = $result->fetch_assoc();
+$user_query = $conn->prepare("SELECT username, user_type FROM user WHERE id = ?");
+$user_query->bind_param("i", $user_id);
+$user_query->execute();
+$user_result = $user_query->get_result();
+$user = $user_result->fetch_assoc();
 $username = $user['username'];
 $user_type = $user['user_type'];
 
@@ -37,8 +37,23 @@ if ($user_type !== 'Restaurant') {
     exit();
 }
 
+// Handle delete request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    $delete_id = $_POST['delete_id'];
+    $delete_query = $conn->prepare("DELETE FROM inventory WHERE id = ? AND donor = ?");
+    $delete_query->bind_param("is", $delete_id, $username);
+    
+    if ($delete_query->execute()) {
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false]);
+    }
+    $delete_query->close();
+    exit();  // End script after processing delete request
+}
+
 // Fetch all inventory items with date_created and last_modified
-$inventory_query = $conn->prepare("SELECT id, name, category, description, picture, donor, date_created, last_modified FROM inventory WHERE donor = ?");
+$inventory_query = $conn->prepare("SELECT id, name, category, expiry_date, quantity, picture, donor, date_created, last_modified FROM inventory WHERE donor = ?");
 $inventory_query->bind_param("s", $username);
 $inventory_query->execute();
 $inventory_result = $inventory_query->get_result();
@@ -102,17 +117,6 @@ $inventory_result = $inventory_query->get_result();
             flex: 1;
         }
 
-            /* Style for images in the table */
-        .inventory-image {
-            max-width: 100px;
-            max-height: 100px;
-            object-fit: cover;
-            border: 1px solid #ddd;
-            padding: 5px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
         /* Full-screen modal image */
         #image-modal {
             display: none; /* Hidden by default */
@@ -133,6 +137,9 @@ $inventory_result = $inventory_query->get_result();
             object-fit: contain;
         }
 
+        .btn-spacing {
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -150,7 +157,7 @@ $inventory_result = $inventory_query->get_result();
             <select id="category-filter" class="form-select filter-box" style="width: 200px;">
                 <option value="">All Categories</option>
                 <option value="Fruits and Vegetables">Fruits and Vegetables</option>
-               <option value="Dairy Products">Dairy Products</option>
+                <option value="Dairy Products">Dairy Products</option>
                 <option value="Meat and Fish">Meat and Fish</option>
                 <option value="Grains and Cereals">Grains and Cereals</option>
                 <option value="Baked Goods">Baked Goods</option>
@@ -163,55 +170,57 @@ $inventory_result = $inventory_query->get_result();
         <a href="add.php" class="btn btn-success add-button">Add Entity</a>
 
         <table class="table table-bordered" id="inventory-table">
-    <thead>
-        <tr>
-            <th>Entity ID</th>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Description</th>
-            <th>Picture</th>
-            <th>Donor</th>
-            <th>Date Created</th>
-            <th>Last Modified</th>
-            <th>Check</th> <!-- New "Check" column -->
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php while ($row = $inventory_result->fetch_assoc()): ?>
-            <tr class="inventory-row" data-category="<?php echo htmlspecialchars($row['category']); ?>">
-                <td><?php echo htmlspecialchars($row['id']); ?></td>
-                <td><?php echo htmlspecialchars($row['name']); ?></td>
-                <td><?php echo htmlspecialchars($row['category']); ?></td>
-                <td><?php echo htmlspecialchars($row['description']); ?></td>
-                <td>
-                    <?php if (!empty($row['picture'])): ?>
-                        <img src="uploads/<?php echo htmlspecialchars($row['picture']); ?>" alt="Image" class="inventory-image clickable-image">
-                    <?php else: ?>
-                        No picture
-                    <?php endif; ?>
-                </td>
-                <td><?php echo htmlspecialchars($row['donor']); ?></td>
-                <td><?php echo htmlspecialchars($row['date_created']); ?></td>
-                <td><?php echo htmlspecialchars($row['last_modified']); ?></td>
-                <td>
-                    <a href="info.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-info btn-sm">Info</a> <!-- New Info button -->
-                </td>
-                <td>
-                    <?php if ($row['donor'] == $username): ?>
-                        <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm">Edit</a>
-                    <?php endif; ?>
-                </td>
-            </tr>
-        <?php endwhile; ?>
-        <?php if ($inventory_result->num_rows == 0): ?>
-            <tr>
-                <td colspan="10" class="text-center">No inventory added yet.</td> <!-- Updated colspan to 10 -->
-            </tr>
-        <?php endif; ?>
-    </tbody>
-</table>
-
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Expiry Date</th>
+                    <th>Quantity</th>
+                    <th>Picture</th>
+                    <th>Donor</th>
+                    <th>Date Created</th>
+                    <th>Last Modified</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php while ($row = $inventory_result->fetch_assoc()): ?>
+                    <tr class="inventory-row" data-category="<?php echo htmlspecialchars($row['category']); ?>">
+                        <td><?php echo htmlspecialchars($row['id']); ?></td>
+                        <td><?php echo htmlspecialchars($row['name']); ?></td>
+                        <td><?php echo htmlspecialchars($row['category']); ?></td>
+                        <td><?php echo htmlspecialchars($row['expiry_date']); ?></td>
+                        <td><?php echo htmlspecialchars($row['quantity']); ?></td>
+                        <td>
+                            <?php if (!empty($row['picture'])): ?>
+                                <img src="uploads/<?php echo htmlspecialchars($row['picture']); ?>" alt="Image" class="inventory-image">
+                            <?php else: ?>
+                                No picture
+                            <?php endif; ?>
+                        </td>
+                        <td><?php echo htmlspecialchars($row['donor']); ?></td>
+                        <td><?php echo htmlspecialchars($row['date_created']); ?></td>
+                        <td><?php echo htmlspecialchars($row['last_modified']); ?></td>
+                        <td>
+                            <a href="info.php?id=<?php echo $row['id']; ?>" class="btn btn-info btn-sm btn-spacing">Info</a>
+                            <?php if ($row['donor'] == $username): ?>
+                                <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm btn-spacing">Edit</a>
+                                <form action="" method="POST" class="d-inline">
+                                    <input type="hidden" name="delete_id" value="<?php echo $row['id']; ?>">
+                                    <button type="submit" class="btn btn-danger btn-sm btn-spacing">Delete</button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+                <?php if ($inventory_result->num_rows == 0): ?>
+                    <tr>
+                        <td colspan="10" class="text-center">No inventory added yet.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
 
         <!-- Full-screen image modal -->
         <div id="image-modal">
@@ -227,9 +236,7 @@ $inventory_result = $inventory_query->get_result();
             var rows = document.querySelectorAll('.inventory-row');
             rows.forEach(function(row) {
                 var name = row.cells[1].innerText.toLowerCase();
-                var category = row.cells[2].innerText.toLowerCase();
-                var description = row.cells[3].innerText.toLowerCase();
-                if (name.includes(searchValue) || category.includes(searchValue) || description.includes(searchValue)) {
+                if (name.includes(searchValue)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -241,24 +248,22 @@ $inventory_result = $inventory_query->get_result();
         document.getElementById('search-btn').addEventListener('click', function() {
             var searchValue = document.getElementById('search').value.toLowerCase();
             var rows = document.querySelectorAll('.inventory-row');
-    
-                rows.forEach(function(row) {
-                var name = row.cells[1].innerText.toLowerCase(); // Name is in the second cell (index 1)
+            rows.forEach(function(row) {
+                var name = row.cells[1].innerText.toLowerCase();
                 if (name.includes(searchValue)) {
-                    row.style.display = '';  // Show rows where the name matches the search term
+                    row.style.display = '';
                 } else {
-                    row.style.display = 'none';  // Hide rows that don't match
+                    row.style.display = 'none';
                 }
-            );
+            });
         });
-
 
         // Category Filter Functionality
         document.getElementById('category-filter').addEventListener('change', function() {
             var selectedCategory = this.value.toLowerCase();
             var rows = document.querySelectorAll('.inventory-row');
             rows.forEach(function(row) {
-                var category = row.getAttribute('data-category').toLowerCase();
+                var category = row.dataset.category.toLowerCase();
                 if (selectedCategory === '' || category === selectedCategory) {
                     row.style.display = '';
                 } else {
@@ -267,31 +272,49 @@ $inventory_result = $inventory_query->get_result();
             });
         });
 
-        // JavaScript to handle image click and open modal
-        document.querySelectorAll('.clickable-image').forEach(function(image) {
-            image.addEventListener('click', function() {
+        // Full-screen image viewer
+        document.querySelectorAll('.inventory-image').forEach(function(img) {
+            img.addEventListener('click', function() {
                 var src = this.getAttribute('src');
                 var modal = document.getElementById('image-modal');
-                var modalImg = modal.querySelector('img');
-                modalImg.setAttribute('src', src);
+                modal.querySelector('img').setAttribute('src', src);
                 modal.style.display = 'block';
             });
         });
 
-        // Close the modal when clicking outside the image or pressing "ESC"
-        document.addEventListener('click', function(event) {
-            var modal = document.getElementById('image-modal');
-            if (event.target == modal) {
-                modal.style.display = 'none';
+        // Close modal on clicking outside of the image
+        document.getElementById('image-modal').addEventListener('click', function(e) {
+            if (e.target.tagName !== 'IMG') {
+                this.style.display = 'none';
             }
         });
 
-        document.addEventListener('keydown', function(event) {
-            if (event.key === "Escape") {
-                document.getElementById('image-modal').style.display = 'none';
-            }
+        // Delete button functionality
+        document.querySelectorAll('.delete-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var entityId = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to delete this entity?')) {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', 'delete.php', true);
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            alert('Entity deleted successfully.');
+                            location.reload();
+                        } else {
+                            alert('Failed to delete the entity.');
+                        }
+                    };
+                    xhr.send('id=' + encodeURIComponent(entityId));
+                }
+            });
         });
-
     </script>
 </body>
 </html>
+
+<?php
+$inventory_query->close();
+$user_query->close();
+$conn->close();
+?>

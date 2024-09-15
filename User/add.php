@@ -41,7 +41,8 @@ if ($user_type !== 'Restaurant') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $category = $_POST['category'];
-    $description = $_POST['description'];
+    $quantity = $_POST['quantity'];
+    $expiry_date = $_POST['expiry_date'];
     $picture = '';
 
     // Handle picture upload
@@ -72,14 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Insert data into the inventory table
-    $insert_query = $conn->prepare("INSERT INTO inventory (name, category, description, picture, donor) VALUES (?, ?, ?, ?, ?)");
-    $insert_query->bind_param("sssss", $name, $category, $description, $picture, $username);
+    $insert_query = $conn->prepare("INSERT INTO inventory (name, category, quantity, expiry_date, picture, donor) VALUES (?, ?, ?, ?, ?, ?)");
+    $insert_query->bind_param("ssisss", $name, $category, $quantity, $expiry_date, $picture, $username);
     
     if ($insert_query->execute()) {
         // Fetch the last inserted ID (Entity ID)
         $entity_id = $conn->insert_id;
-        echo "New inventory added successfully! Entity ID: " . $entity_id;
-        header("refresh:2; url=inventory.php"); // Redirect after 2 seconds
+        echo "<script>alert('New inventory added successfully! Entity ID: " . $entity_id . "'); window.location.href = 'inventory.php';</script>";
         exit();
     } else {
         echo "Error: " . $insert_query->error;
@@ -108,12 +108,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-group {
             margin-bottom: 15px;
         }
+        .form-group input[type="number"] {
+            -moz-appearance: textfield; /* Firefox */
+            -webkit-appearance: none; /* Safari */
+            appearance: none; /* Other browsers */
+        }
     </style>
 </head>
 <body>
     <!-- Navigation Bar -->
     <?php include 'navbar.php'; ?>
-    </nav>
 
     <div class="container">
         <h2>Add Inventory Item</h2>
@@ -136,8 +140,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </select>
             </div>
             <div class="form-group">
-                <label for="description">Description (Optional)</label>
-                <textarea class="form-control" id="description" name="description"></textarea>
+                <label for="quantity">Quantity</label>
+                <input type="number" class="form-control" id="quantity" name="quantity" required min="1" step="1">
+            </div>
+            <div class="form-group">
+                <label for="expiry_date">Expiry Date</label>
+                <input type="date" class="form-control" id="expiry_date" name="expiry_date" required>
             </div>
             <div class="form-group">
                 <label for="picture">Picture (Optional)</label>

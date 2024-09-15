@@ -23,101 +23,38 @@ if (!isset($_SESSION['user_id'])) {
 
 // Fetch user info
 $user_id = $_SESSION['user_id'];
-$query = $conn->prepare("SELECT username, user_type FROM user WHERE id = ?");
-$query->bind_param("i", $user_id);
-$query->execute();
-$result = $query->get_result();
-$user = $result->fetch_assoc();
+$user_query = $conn->prepare("SELECT username, user_type FROM user WHERE id = ?");
+$user_query->bind_param("i", $user_id);
+$user_query->execute();
+$user_result = $user_query->get_result();
+$user = $user_result->fetch_assoc();
 $username = $user['username'];
 $user_type = $user['user_type'];
 
 // If not logged in as restaurant, restrict access
 if ($user_type !== 'Restaurant') {
-    echo "Access denied. Only restaurant users can edit inventory.";
+    echo "Access denied. Only restaurant users can view this page.";
     exit();
 }
 
-// Check if an inventory item ID was passed
+// Fetch the inventory item to edit
 if (!isset($_GET['id'])) {
-    echo "No inventory item selected.";
+    echo "No entity ID specified.";
     exit();
 }
 
-$inventory_id = $_GET['id'];
-
-// Fetch the inventory item details
-$inventory_query = $conn->prepare("SELECT * FROM inventory WHERE id = ? AND donor = ?");
-$inventory_query->bind_param("is", $inventory_id, $username);
+$entity_id = $_GET['id'];
+$inventory_query = $conn->prepare("SELECT id, name, category, expiry_date, quantity, picture, donor FROM inventory WHERE id = ? AND donor = ?");
+$inventory_query->bind_param("is", $entity_id, $username);
 $inventory_query->execute();
 $inventory_result = $inventory_query->get_result();
 
 if ($inventory_result->num_rows === 0) {
-    echo "No such inventory item found or you're not authorized to edit this item.";
+    echo "Entity not found or you do not have permission to edit it.";
     exit();
 }
 
-$inventory = $inventory_result->fetch_assoc();
-
-// Handle form submission for editing
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
-    $name = $_POST['name'];
-    $category = $_POST['category'];
-    $description = $_POST['description'];
-    $picture = $inventory['picture'];
-
-    // Handle picture upload if a new picture is provided
-    if (isset($_FILES['picture']) && $_FILES['picture']['error'] === 0) {
-        $target_dir = "upload/";
-        $picture = basename($_FILES["picture"]["name"]);
-        $target_file = $target_dir . $picture;
-        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-
-        // Check if the file is a valid image
-        $check = getimagesize($_FILES["picture"]["tmp_name"]);
-        if ($check === false) {
-            echo "File is not an image.";
-            exit();
-        }
-
-        // Allow only JPG, JPEG, PNG files
-        if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png") {
-            echo "Sorry, only JPG, JPEG, & PNG files are allowed.";
-            exit();
-        }
-
-        // Move the file to the upload directory
-        if (!move_uploaded_file($_FILES["picture"]["tmp_name"], $target_file)) {
-            echo "Sorry, there was an error uploading your file.";
-            exit();
-        }
-    }
-
-    // Update the inventory item in the database
-    $update_query = $conn->prepare("UPDATE inventory SET name = ?, category = ?, description = ?, picture = ? WHERE id = ? AND donor = ?");
-    $update_query->bind_param("ssssis", $name, $category, $description, $picture, $inventory_id, $username);
-
-    if ($update_query->execute()) {
-        echo "Inventory updated successfully!";
-        header("Location: inventory.php");
-        exit();
-    } else {
-        echo "Error: " . $update_query->error;
-    }
-}
-
-// Handle deletion of the inventory item
-if (isset($_POST['delete'])) {
-    $delete_query = $conn->prepare("DELETE FROM inventory WHERE id = ? AND donor = ?");
-    $delete_query->bind_param("is", $inventory_id, $username);
-
-    if ($delete_query->execute()) {
-        echo "Item deleted successfully!";
-        header("Location: inventory.php");
-        exit();
-    } else {
-        echo "Error: " . $delete_query->error;
-    }
-}
+$item = $inventory_result->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
@@ -126,7 +63,7 @@ if (isset($_POST['delete'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <title>Edit Inventory</title>
+    <title>Edit Inventory Item</title>
     <style>
         body {
             font-family: 'Lato', sans-serif;
@@ -138,59 +75,66 @@ if (isset($_POST['delete'])) {
         .container {
             margin-top: 50px;
         }
+        .inventory-image {
+            max-width: 300px;
+            max-height: 300px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            padding: 5px;
+            border-radius: 5px;
+        }
         .form-group {
             margin-bottom: 15px;
         }
-        .delete-button {
-            background-color: red;
-            color: white;
-            display: inline-flex;
-            align-items: center;
+        .buttons-container {
+            margin-top: 20px;
+            text-align: right;
         }
-        .delete-button i {
-            margin-right: 5px;
+        .cancel-button {
+            margin-left: 10px;
         }
     </style>
 </head>
 <body>
     <!-- Navigation Bar -->
     <?php include 'navbar.php'; ?>
-    </nav>
 
     <div class="container">
-    <h2>Edit Inventory Item</h2>
-    <form action="edit.php?id=<?php echo $inventory_id; ?>" method="POST" enctype="multipart/form-data">
-        <!-- Entity ID Display -->
-        <div class="form-group">
-            <label for="entity_id">Entity ID</label>
-            <input type="text" class="form-control" id="entity_id" name="entity_id" value="<?php echo $inventory_id; ?>" readonly>
-        </div>
+        <h2>Edit Inventory Item</h2>
+        
+        <form action="edit.php" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="id" value="<?php echo htmlspecialchars($item['id']); ?>">
 
-        <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($inventory['name']); ?>" required>
-        </div>
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" class="form-control" value="<?php echo htmlspecialchars($item['name']); ?>" required>
+            </div>
 
-        <div class="form-group">
-            <label for="category">Category</label>
-            <select class="form-control" id="category" name="category" required>
-                <option value="Fruits and Vegetables" <?php if ($inventory['category'] == 'Fruits and Vegetables') echo 'selected'; ?>>Fruits and Vegetables</option>
-                <option value="Dairy Products" <?php if ($inventory['category'] == 'Dairy Products') echo 'selected'; ?>>Dairy Products</option>
-                <option value="Meat and Fish" <?php if ($inventory['category'] == 'Meat and Fish') echo 'selected'; ?>>Meat and Fish</option>
-                <option value="Grains and Cereals" <?php if ($inventory['category'] == 'Grains and Cereals') echo 'selected'; ?>>Grains and Cereals</option>
-                <option value="Baked Goods" <?php if ($inventory['category'] == 'Baked Goods') echo 'selected'; ?>>Baked Goods</option>
-                <option value="Prepared Foods" <?php if ($inventory['category'] == 'Prepared Foods') echo 'selected'; ?>>Prepared Foods</option>
-                <option value="Beverages" <?php if ($inventory['category'] == 'Beverages') echo 'selected'; ?>>Beverages</option>
-                <option value="Condiments and Sauces" <?php if ($inventory['category'] == 'Condiments and Sauces') echo 'selected'; ?>>Condiments and Sauces</option>
-            </select>
-        </div>
+            <div class="form-group">
+                <label for="category">Category:</label>
+                <select id="category" name="category" class="form-select" required>
+                    <option value="Fruits and Vegetables" <?php echo ($item['category'] === 'Fruits and Vegetables') ? 'selected' : ''; ?>>Fruits and Vegetables</option>
+                    <option value="Dairy Products" <?php echo ($item['category'] === 'Dairy Products') ? 'selected' : ''; ?>>Dairy Products</option>
+                    <option value="Meat and Fish" <?php echo ($item['category'] === 'Meat and Fish') ? 'selected' : ''; ?>>Meat and Fish</option>
+                    <option value="Grains and Cereals" <?php echo ($item['category'] === 'Grains and Cereals') ? 'selected' : ''; ?>>Grains and Cereals</option>
+                    <option value="Baked Goods" <?php echo ($item['category'] === 'Baked Goods') ? 'selected' : ''; ?>>Baked Goods</option>
+                    <option value="Prepared Foods" <?php echo ($item['category'] === 'Prepared Foods') ? 'selected' : ''; ?>>Prepared Foods</option>
+                    <option value="Beverages" <?php echo ($item['category'] === 'Beverages') ? 'selected' : ''; ?>>Beverages</option>
+                    <option value="Condiments and Sauces" <?php echo ($item['category'] === 'Condiments and Sauces') ? 'selected' : ''; ?>>Condiments and Sauces</option>
+                </select>
+            </div>
 
-        <div class="form-group">
-            <label for="description">Description (Optional)</label>
-            <textarea class="form-control" id="description" name="description"><?php echo htmlspecialchars($inventory['description']); ?></textarea>
-        </div>
+            <div class="form-group">
+                <label for="expiry_date">Expiry Date:</label>
+                <input type="date" id="expiry_date" name="expiry_date" class="form-control" value="<?php echo htmlspecialchars($item['expiry_date']); ?>" required>
+            </div>
 
-        <div class="form-group">
+            <div class="form-group">
+                <label for="quantity">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" class="form-control" value="<?php echo htmlspecialchars($item['quantity']); ?>" required>
+            </div>
+
+            <div class="form-group">
             <label for="picture">Picture (Optional)</label>
             <input type="file" class="form-control" id="picture" name="picture" accept=".jpg,.jpeg,.png">
             <?php if (!empty($inventory['picture'])): ?>
@@ -198,17 +142,63 @@ if (isset($_POST['delete'])) {
             <?php endif; ?>
         </div>
 
-        <button type="submit" name="update" class="btn btn-primary">Update Inventory</button>
-    </form>
+            <div class="buttons-container">
+                <button type="submit" name="update" class="btn btn-primary">Update Inventory</button>
+                <a href="inventory.php" class="btn btn-secondary cancel-button">Cancel</a>
+            </div>
+        </form>
 
-    <form action="edit.php?id=<?php echo $inventory_id; ?>" method="POST" style="margin-top: 15px;">
-        <button type="submit" name="delete" class="btn delete-button" onclick="return confirm('Are you sure you want to delete this item?');">
-            <i class="bi bi-trash"></i> Delete
-        </button>
-    </form>
-</div>
-
+        <!-- Confirmation and success messages -->
+        <div id="confirmation-message" class="alert alert-warning mt-3" style="display: none;">
+            Are you sure you want to update this item?
+        </div>
+        <div id="success-message" class="alert alert-success mt-3" style="display: none;">
+            Inventory item updated successfully.
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelector('form').addEventListener('submit', function(event) {
+            event.preventDefault();  // Prevent the default form submission
+            var confirmationMessage = document.getElementById('confirmation-message');
+            var successMessage = document.getElementById('success-message');
+            
+            confirmationMessage.style.display = 'block';
+            
+            if (confirm('Are you sure you want to update this item?')) {
+                var formData = new FormData(this);
+                fetch('edit.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        confirmationMessage.style.display = 'none';
+                        successMessage.style.display = 'block';
+                        setTimeout(function() {
+                            window.location.href = 'inventory.php';
+                        }, 2000);
+                    } else {
+                        confirmationMessage.style.display = 'none';
+                        alert('Failed to update inventory item.');
+                    }
+                })
+                .catch(error => {
+                    confirmationMessage.style.display = 'none';
+                    alert('An error occurred while updating the inventory item.');
+                });
+            } else {
+                confirmationMessage.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
+
+<?php
+$inventory_query->close();
+$user_query->close();
+$conn->close();
+?>
