@@ -179,7 +179,7 @@ $conn->close();
                         <td><?php echo htmlspecialchars($row['donor']); ?></td>
                         <td><?php echo htmlspecialchars($row['date_created']); ?></td>
                         <td><?php echo htmlspecialchars($row['last_modified']); ?></td>
-                        // Inside the inventory table rows
+                        
                         <td>
                         <form id="requestForm-<?php echo $row['id']; ?>" action="request.php" method="POST">
                             <input type="hidden" name="item_id" value="<?php echo $row['id']; ?>">
