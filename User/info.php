@@ -101,7 +101,7 @@ $inventory = $inventory_result->fetch_assoc();
 
         <div class="form-group">
             <label for="description">Description</label>
-            <textarea class="form-control" id="description" readonly><?php echo htmlspecialchars($inventory['description']); ?></textarea>
+            <textarea class="form-control" id="description" readonly><?php echo isset($inventory['description']) ? htmlspecialchars($inventory['description']) : 'No description available'; ?></textarea>
         </div>
 
         <div class="form-group">
