@@ -64,8 +64,6 @@ $edit_history_query->execute();
 
 ?>
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -169,6 +167,42 @@ $edit_history_query->execute();
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js">
+    document.querySelector('form').addEventListener('submit', function(event) {
+        event.preventDefault();  // Prevent the default form submission
+        var confirmationMessage = document.getElementById('confirmation-message');
+        var successMessage = document.getElementById('success-message');
+        
+        confirmationMessage.style.display = 'block';
+
+        if (confirm('Are you sure you want to update this item?')) {
+            var formData = new FormData(this);
+            fetch('edit.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    confirmationMessage.style.display = 'none';
+                    successMessage.style.display = 'block';
+                    setTimeout(function() {
+                        window.location.href = 'inventory.php';
+                    }, 2000);
+                } else {
+                    confirmationMessage.style.display = 'none';
+                    alert('Failed to update inventory item.');
+                }
+            })
+            .catch(error => {
+                confirmationMessage.style.display = 'none';
+                alert('An error occurred while updating the inventory item.');
+            });
+        } else {
+            confirmationMessage.style.display = 'none';
+        }
+    });
+</script>
+
 </body>
 </html>

@@ -1,3 +1,38 @@
+<?php
+session_start();
+
+// Database connection parameters
+$servername = "localhost";
+$db_username = "root";  // Replace with your database username
+$db_password = "";  // Replace with your database password
+$dbname = "foodwaste";
+
+// Create a database connection
+$conn = new mysqli($servername, $db_username, $db_password, $dbname);
+
+// Check if the connection was successful
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: user_login.php');
+    exit();
+}
+
+// Fetch user info
+$user_id = $_SESSION['user_id'];
+$user_query = $conn->prepare("SELECT user_type FROM user WHERE id = ?");
+$user_query->bind_param("i", $user_id);
+$user_query->execute();
+$user_result = $user_query->get_result();
+$user = $user_result->fetch_assoc();
+$user_type = $user['user_type'];
+
+$user_query->close();
+$conn->close();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -81,7 +116,11 @@
         <div class="cards">
             <div class="card">
                 <h2>Inventory</h2>
-                <a href="inventory.php">View Inventory</a>
+                <?php if ($user_type === 'NGO'): ?>
+                    <a href="item.php">Browse Inventory</a>
+                <?php else: ?>
+                    <a href="inventory.php">View Inventory</a>
+                <?php endif; ?>
             </div>
             <div class="card">
                 <h2>Contacts</h2>

@@ -79,6 +79,8 @@ if (isset($_POST['logout'])) {
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="inventory.php">Inventory</a>
+                    <li class="nav-item">
+                        <a class="nav-link" href="request.php">Requests</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="contacts.php">Contacts</a>

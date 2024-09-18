@@ -37,6 +37,51 @@ if ($user_type !== 'Restaurant') {
     exit();
 }
 
+// Check if the form is submitted
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update'])) {
+    // Retrieve and sanitize form data
+    $id = $_POST['id'];
+    $name = $conn->real_escape_string($_POST['name']);
+    $category = $conn->real_escape_string($_POST['category']);
+    $expiry_date = $conn->real_escape_string($_POST['expiry_date']);
+    $quantity = (int)$_POST['quantity'];
+
+    // Handle file upload
+    if (isset($_FILES['picture']) && $_FILES['picture']['error'] == 0) {
+        $picture = $_FILES['picture'];
+        $upload_dir = 'upload/';
+        $upload_file = $upload_dir . basename($picture['name']);
+
+        // Move the uploaded file
+        if (move_uploaded_file($picture['tmp_name'], $upload_file)) {
+            $picture_filename = basename($picture['name']);
+        } else {
+            $picture_filename = null;
+        }
+    } else {
+        $picture_filename = null;
+    }
+
+    // Update inventory item in the database
+    if ($picture_filename) {
+        $query = $conn->prepare("UPDATE inventory SET name = ?, category = ?, expiry_date = ?, quantity = ?, picture = ? WHERE id = ? AND donor = ?");
+        $query->bind_param("sssssis", $name, $category, $expiry_date, $quantity, $picture_filename, $id, $username);
+    } else {
+        $query = $conn->prepare("UPDATE inventory SET name = ?, category = ?, expiry_date = ?, quantity = ? WHERE id = ? AND donor = ?");
+        $query->bind_param("ssssis", $name, $category, $expiry_date, $quantity, $id, $username);
+    }
+
+    if ($query->execute()) {
+        // Redirect back to the inventory page on success
+        header('Location: inventory.php');
+        exit();
+    } else {
+        echo "<script>alert('Error updating inventory item.');</script>";
+    }
+
+    $query->close();
+}
+
 // Fetch the inventory item to edit
 if (!isset($_GET['id'])) {
     echo "No entity ID specified.";
@@ -56,6 +101,7 @@ if ($inventory_result->num_rows === 0) {
 
 $item = $inventory_result->fetch_assoc();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -157,8 +203,7 @@ $item = $inventory_result->fetch_assoc();
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js">
         document.querySelector('form').addEventListener('submit', function(event) {
             event.preventDefault();  // Prevent the default form submission
             var confirmationMessage = document.getElementById('confirmation-message');
