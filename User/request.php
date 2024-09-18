@@ -1,62 +1,55 @@
 <?php
-session_start();
+// Include database connection at the beginning of the file
+$conn = new mysqli('localhost', 'root', '', 'foodwaste');
 
-// Database connection parameters
-$servername = "localhost";
-$db_username = "root";  // Replace with your database username
-$db_password = "";  // Replace with your database password
-$dbname = "foodwaste";
-
-// Create a database connection
-$conn = new mysqli($servername, $db_username, $db_password, $dbname);
-
-// Check if the connection was successful
+// Check the connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header('Location: user_login.php');
-    exit();
-}
+// Start the session to retrieve the username
+session_start();
+$username = $_SESSION['username']; // Ensure 'username' is correctly set in session
 
-// Check if form was submitted
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+// Handle form submission for making a request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['requested_quantity'])) {
     $item_id = $_POST['item_id'];
     $requested_quantity = $_POST['requested_quantity'];
+    
+    // Fetch item name
+    $item_query = $conn->query("SELECT name FROM inventory WHERE id = $item_id");
+    if ($item_query && $item_query->num_rows > 0) {
+        $item_row = $item_query->fetch_assoc();
+        $item_name = $item_row['name'];
 
-    // Insert request into the database using inventory_id
-    $stmt = $conn->prepare("INSERT INTO requests (inventory_id, username, requested_quantity, status, request_date) VALUES (?, ?, ?, 'pending', NOW())");
-    $username = $_SESSION['username'];  // Assuming username is stored in the session
-    $stmt->bind_param("isi", $item_id, $username, $requested_quantity);
-
-    if ($stmt->execute()) {
-        // Redirect back to item.php with a success message
-        header("Location: item.php?request=success");
-        exit();
+        // Insert request into the requests table
+        $stmt = $conn->prepare("INSERT INTO requests (id, name, username, requested_quantity, status, request_date) VALUES (?, ?, ?, ?, 'pending', NOW())");
+        $stmt->bind_param("issi", $item_id, $item_name, $username, $requested_quantity);
+        
+        if ($stmt->execute()) {
+            echo "Request made successfully!";
+        } else {
+            echo "Error making request: " . $stmt->error;
+        }
+        $stmt->close();
     } else {
-        echo "Error: " . $stmt->error;
+        echo "Item not found.";
     }
 }
 
-// Retrieve requests with item_name by joining inventory table
-$request_query = "
-    SELECT r.request_id, r.inventory_id, i.name AS item_name, r.username, r.requested_quantity, r.status, r.request_date, r.approval_date, r.fulfillment_date
-    FROM requests r
-    JOIN inventory i ON r.inventory_id = i.id
-    WHERE r.username = ?
-";
-$request_stmt = $conn->prepare($request_query);
-$request_stmt->bind_param("s", $_SESSION['username']);
-$request_stmt->execute();
-$request_result = $request_stmt->get_result();
+// Fetch requests to display
+$request_result = $conn->query("SELECT * FROM requests WHERE username = '$username'");
+
+// Close the database connection
+$conn->close();
+
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <title>My Requests</title>
@@ -74,10 +67,19 @@ $request_result = $request_stmt->get_result();
         table {
             width: 100%;
             margin-top: 20px;
+            border-collapse: collapse;
         }
         table th, table td {
             text-align: center;
             vertical-align: middle;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
         }
     </style>
 </head>
@@ -102,25 +104,31 @@ $request_result = $request_stmt->get_result();
                 </tr>
             </thead>
             <tbody>
-                <?php if ($request_result->num_rows > 0): ?>
-                    <?php while ($row = $request_result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($row['request_id']); ?></td>
-                            <td><?php echo htmlspecialchars($row['inventory_id']); ?></td>
-                            <td><?php echo htmlspecialchars($row['item_name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['username']); ?></td>
-                            <td><?php echo htmlspecialchars($row['requested_quantity']); ?></td>
-                            <td><?php echo htmlspecialchars($row['status']); ?></td>
-                            <td><?php echo htmlspecialchars($row['request_date']); ?></td>
-                            <td><?php echo $row['approval_date'] ? htmlspecialchars($row['approval_date']) : 'N/A'; ?></td>
-                            <td><?php echo $row['fulfillment_date'] ? htmlspecialchars($row['fulfillment_date']) : 'N/A'; ?></td>
-                        </tr>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="9" class="text-center">No requests found.</td>
-                    </tr>
-                <?php endif; ?>
+                <?php
+                if ($request_result) {
+                    if ($request_result->num_rows > 0) {
+                        while ($row = $request_result->fetch_assoc()) {
+                            echo "<tr>";
+                            echo "<td>" . htmlspecialchars($row['request_id']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['id']) . "</td>"; // Using 'id' instead of 'inventory_id'
+                            echo "<td>" . htmlspecialchars($row['name']) . "</td>"; // 'name' should match the column in 'requests' table
+                            echo "<td>" . htmlspecialchars($row['username']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['status']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
+                            echo "<td>" . ($row['approval_date'] ? htmlspecialchars($row['approval_date']) : 'N/A') . "</td>";
+                            echo "<td>" . ($row['fulfillment_date'] ? htmlspecialchars($row['fulfillment_date']) : 'N/A') . "</td>";
+                            echo "</tr>";
+                        }
+                    } else {
+                        // Display message within a row if no requests found
+                        echo "<tr><td colspan='9' class='text-center'>No requests found.</td></tr>";
+                    }
+                } else {
+                    // Display error within a row if query fails
+                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
+                }
+                ?>
             </tbody>
         </table>
     </div>
