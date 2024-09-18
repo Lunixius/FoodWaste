@@ -138,8 +138,9 @@ $inventory_result = $inventory_query->get_result();
         }
 
         .btn-spacing {
-            margin-right: 5px;
+            margin-right: 10px; /* Adjust this value for desired spacing */
         }
+
     </style>
 </head>
 <body>
@@ -203,15 +204,16 @@ $inventory_result = $inventory_query->get_result();
                         <td><?php echo htmlspecialchars($row['date_created']); ?></td>
                         <td><?php echo htmlspecialchars($row['last_modified']); ?></td>
                         <td>
-                            <a href="info.php?id=<?php echo $row['id']; ?>" class="btn btn-info btn-sm btn-spacing">Info</a>
-                            <?php if ($row['donor'] == $username): ?>
-                                <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm btn-spacing">Edit</a>
-                                <form action="" method="POST" class="d-inline">
-                                    <input type="hidden" name="delete_id" value="<?php echo $row['id']; ?>">
-                                    <button type="submit" class="btn btn-danger btn-sm btn-spacing">Delete</button>
-                                </form>
-                            <?php endif; ?>
-                        </td>
+                        <a href="info.php?id=<?php echo $row['id']; ?>" class="btn btn-info btn-sm btn-spacing">Info</a>
+                        <?php if ($row['donor'] == $username): ?>
+                            <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm btn-spacing">Edit</a>
+                            <form action="" method="POST" class="d-inline">
+                                <input type="hidden" name="delete_id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" class="btn btn-danger btn-sm btn-spacing" onclick="return confirm('Are you sure you want to delete this inventory item?');">Delete</button>
+                            </form>
+                        <?php endif; ?>
+                    </td>
+
                     </tr>
                 <?php endwhile; ?>
                 <?php if ($inventory_result->num_rows == 0): ?>
@@ -227,6 +229,11 @@ $inventory_result = $inventory_query->get_result();
             <img src="" alt="Full Screen Image">
         </div>
     </div>
+
+    <div id="delete-message" style="display: none; position: fixed; top: 10px; right: 10px; background-color: #28a745; color: white; padding: 10px; border-radius: 5px; z-index: 1000;">
+        Inventory item deleted successfully!
+    </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -290,25 +297,45 @@ $inventory_result = $inventory_query->get_result();
         });
 
         // Delete button functionality
-        document.querySelectorAll('.delete-btn').forEach(function(button) {
-            button.addEventListener('click', function() {
-                var entityId = this.getAttribute('data-id');
-                if (confirm('Are you sure you want to delete this entity?')) {
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('POST', 'delete.php', true);
-                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                    xhr.onload = function() {
-                        if (xhr.status === 200) {
-                            alert('Entity deleted successfully.');
-                            location.reload();
-                        } else {
-                            alert('Failed to delete the entity.');
+        document.querySelectorAll('.btn-danger').forEach(function(button) {
+        button.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the form from submitting normally
+
+            if (confirm('Are you sure you want to delete this inventory item?')) {
+                var deleteForm = this.closest('form');
+                var formData = new FormData(deleteForm);
+
+                // Send AJAX request to delete the inventory item
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '', true); // Send the request to the same page
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.success) {
+                                // Show success hover pop-up message
+                                var messageDiv = document.getElementById('delete-message');
+                                messageDiv.style.display = 'block';
+                                setTimeout(function() {
+                                    messageDiv.style.display = 'none';
+                                }, 2000); // Hide message after 2 seconds
+
+                                // Optionally, remove the row from the table
+                                deleteForm.closest('tr').remove();
+                            } else {
+                                alert('Failed to delete the inventory item.');
+                            }
+                        } catch (e) {
+                            alert('An error occurred.');
                         }
-                    };
-                    xhr.send('id=' + encodeURIComponent(entityId));
-                }
-            });
+                    } else {
+                        alert('An error occurred while processing the request.');
+                    }
+                };
+                xhr.send(formData);
+            }
         });
+    });
     </script>
 </body>
 </html>
