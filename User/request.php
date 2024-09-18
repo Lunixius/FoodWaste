@@ -133,8 +133,3 @@ $request_result = $request_query->get_result();
 </body>
 </html>
 
-
-<?php
-// Close database connection
-$conn->close();
-?>

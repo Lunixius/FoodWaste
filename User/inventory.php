@@ -340,8 +340,4 @@ $inventory_result = $inventory_query->get_result();
 </body>
 </html>
 
-<?php
-$inventory_query->close();
-$user_query->close();
-$conn->close();
-?>
+
