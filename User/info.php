@@ -51,7 +51,20 @@ if ($inventory_result->num_rows === 0) {
 }
 
 $inventory = $inventory_result->fetch_assoc();
+
+// Fetch edit history if available (assuming there's an `edit_history` table storing edit logs)
+$history_query = $conn->prepare("SELECT * FROM edit_history WHERE inventory_id = ?");
+
+$inventory_id = $_GET['id'];
+$change_description = "Edited inventory item details."; // Change description accordingly
+
+$edit_history_query = $conn->prepare("INSERT INTO edit_history (inventory_id, change_description) VALUES (?, ?)");
+$edit_history_query->bind_param("is", $inventory_id, $change_description);
+$edit_history_query->execute();
+
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -132,21 +145,27 @@ $inventory = $inventory_result->fetch_assoc();
         <div class="form-group">
             <label for="edit_history">Edit History</label>
             <?php
-            // Fetch edit history if available (assuming there's an `edit_history` table storing edit logs)
-            $history_query = $conn->prepare("SELECT * FROM edit_history WHERE inventory_id = ?");
-            $history_query->bind_param("i", $inventory_id);
-            $history_query->execute();
-            $history_result = $history_query->get_result();
+            // Check if the edit_history table exists
+            $table_exists_query = $conn->query("SHOW TABLES LIKE 'edit_history'");
+            if ($table_exists_query->num_rows > 0) {
+                // Table exists, fetch edit history if available
+                $history_query = $conn->prepare("SELECT * FROM edit_history WHERE inventory_id = ?");
+                $history_query->bind_param("i", $inventory_id);
+                $history_query->execute();
+                $history_result = $history_query->get_result();
 
-            if ($history_result->num_rows > 0): ?>
-                <ul>
-                    <?php while ($history = $history_result->fetch_assoc()): ?>
-                        <li><?php echo htmlspecialchars($history['edit_time']) . " - " . htmlspecialchars($history['change_description']); ?></li>
-                    <?php endwhile; ?>
-                </ul>
-            <?php else: ?>
-                <p>No edit history available.</p>
-            <?php endif; ?>
+                if ($history_result->num_rows > 0): ?>
+                    <ul>
+                        <?php while ($history = $history_result->fetch_assoc()): ?>
+                            li><?php echo htmlspecialchars($history['edit_time']) . " - " . htmlspecialchars($history['change_description']); ?></li>
+                        <?php endwhile; ?>
+                    </ul>
+                <?php else: ?>
+                    <p>No edit history available.</p>
+                <?php endif; ?>
+            <?php } else { ?>
+                <p>Edit history is not available as the edit_history table does not exist.</p>
+            <?php } ?>
         </div>
     </div>
 
