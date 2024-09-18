@@ -31,17 +31,13 @@ $user = $user_result->fetch_assoc();
 $username = $user['username'];
 $user_type = $user['user_type'];
 
-// If not logged in as NGO, restrict access
-if ($user_type !== 'NGO') {
-    echo "Access denied. Only NGO users can view this page.";
-    exit();
-}
-
 // Fetch request information for the logged-in NGO user
 $request_query = $conn->prepare("
     SELECT 
-        r.id AS request_id, 
+        r.request_id, 
+        r.id AS inventory_id, 
         i.name AS item_name, 
+        r.username, 
         r.requested_quantity, 
         r.status, 
         r.request_date, 
@@ -50,13 +46,13 @@ $request_query = $conn->prepare("
     FROM 
         requests r
     JOIN 
-        inventory i ON r.inventory_id = i.id
+        inventory i ON r.id = i.id
     WHERE 
-        r.ngo_id = ?
+        r.username = ?
     ORDER BY 
         r.request_date DESC
 ");
-$request_query->bind_param("i", $user_id);
+$request_query->bind_param("s", $username);
 $request_query->execute();
 $request_result = $request_query->get_result();
 ?>
@@ -99,7 +95,9 @@ $request_result = $request_query->get_result();
             <thead>
                 <tr>
                     <th>Request ID</th>
+                    <th>Inventory ID</th>
                     <th>Item Name</th>
+                    <th>Username</th>
                     <th>Requested Quantity</th>
                     <th>Status</th>
                     <th>Request Date</th>
@@ -112,7 +110,9 @@ $request_result = $request_query->get_result();
                     <?php while ($row = $request_result->fetch_assoc()): ?>
                         <tr>
                             <td><?php echo htmlspecialchars($row['request_id']); ?></td>
+                            <td><?php echo htmlspecialchars($row['inventory_id']); ?></td>
                             <td><?php echo htmlspecialchars($row['item_name']); ?></td>
+                            <td><?php echo htmlspecialchars($row['username']); ?></td>
                             <td><?php echo htmlspecialchars($row['requested_quantity']); ?></td>
                             <td><?php echo htmlspecialchars($row['status']); ?></td>
                             <td><?php echo htmlspecialchars($row['request_date']); ?></td>
@@ -122,7 +122,7 @@ $request_result = $request_query->get_result();
                     <?php endwhile; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="7" class="text-center">No requests found.</td>
+                        <td colspan="9" class="text-center">No requests found.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -132,6 +132,7 @@ $request_result = $request_query->get_result();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
 <?php
 // Close database connection

@@ -3,6 +3,20 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+// Database connection parameters
+$servername = "localhost";
+$db_username = "root";  // Replace with your database username
+$db_password = "";  // Replace with your database password
+$dbname = "foodwaste";
+
+// Create a database connection
+$conn = new mysqli($servername, $db_username, $db_password, $dbname);
+
+// Check if the connection was successful
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
 // Check if user is logged in
 if (!isset($_SESSION['username'])) {
     // Redirect to login page if not logged in
@@ -11,6 +25,14 @@ if (!isset($_SESSION['username'])) {
 }
 
 $username = $_SESSION['username'];
+
+// Fetch user type
+$user_type_query = $conn->prepare("SELECT user_type FROM user WHERE username = ?");
+$user_type_query->bind_param("s", $username);
+$user_type_query->execute();
+$user_type_result = $user_type_query->get_result();
+$user = $user_type_result->fetch_assoc();
+$user_type = $user['user_type'];
 
 if (isset($_POST['logout'])) {
     session_unset();
@@ -78,7 +100,8 @@ if (isset($_POST['logout'])) {
                         <a class="nav-link active" aria-current="page" href="user_homepage.php">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="inventory.php">Inventory</a>
+                        <a class="nav-link" href="<?php echo ($user_type === 'NGO') ? 'item.php' : 'inventory.php'; ?>">Inventory</a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="request.php">Requests</a>
                     </li>
@@ -115,3 +138,8 @@ if (isset($_POST['logout'])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+<?php
+// Close the database connection
+$conn->close();
+?>
