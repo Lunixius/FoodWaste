@@ -177,9 +177,11 @@ $inventory_result = $inventory_query->get_result();
                         <td><?php echo htmlspecialchars($row['date_created']); ?></td>
                         <td><?php echo htmlspecialchars($row['last_modified']); ?></td>
                         <td>
-                            <input type="hidden" name="item_id" value="<?php echo $row['id']; ?>">
-                            <input type="number" name="requested_quantity" min="1" max="<?php echo $row['quantity']; ?>" placeholder="Enter quantity" required>
-                            <button type="submit" class="btn btn-warning btn-sm btn-spacing">Request</button>
+                            <form id="requestForm-<?php echo $row['id']; ?>" action="request.php" method="POST">
+                                <input type="hidden" name="item_id" value="<?php echo $row['id']; ?>">
+                                <input type="number" name="requested_quantity" min="1" max="<?php echo $row['quantity']; ?>" placeholder="Enter quantity" required>
+                                <button type="button" class="btn btn-warning btn-sm btn-spacing" onclick="confirmRequest(<?php echo $row['id']; ?>)">Request</button>
+                            </form>
                         </td>
                     </tr>
                 <?php endwhile; ?>
@@ -255,12 +257,19 @@ $inventory_result = $inventory_query->get_result();
             this.style.display = 'none';
         });
 
-            function requestItem(itemId, maxQuantity) {
-            var requestedQuantity = prompt("Enter the quantity you want to request (max " + maxQuantity + "):");
-            if (requestedQuantity !== null && requestedQuantity > 0 && requestedQuantity <= maxQuantity) {
-                window.location.href = "request.php?id=" + itemId + "&quantity=" + requestedQuantity;
-            } else {
+        // Confirm Request Function
+        function confirmRequest(itemId) {
+            var form = document.getElementById('requestForm-' + itemId);
+            var quantityInput = form.querySelector('input[name="requested_quantity"]');
+            var requestedQuantity = quantityInput.value;
+
+            if (requestedQuantity <= 0 || requestedQuantity > quantityInput.max) {
                 alert("Invalid quantity.");
+                return;
+            }
+
+            if (confirm("Are you sure you want to request this quantity?")) {
+                form.submit();
             }
         }
     </script>

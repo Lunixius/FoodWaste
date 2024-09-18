@@ -21,40 +21,36 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Fetch user info
-$user_id = $_SESSION['user_id'];
-$user_query = $conn->prepare("SELECT username, user_type FROM user WHERE id = ?");
-$user_query->bind_param("i", $user_id);
-$user_query->execute();
-$user_result = $user_query->get_result();
-$user = $user_result->fetch_assoc();
-$username = $user['username'];
-$user_type = $user['user_type'];
+// Check if form was submitted
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $item_id = $_POST['item_id'];
+    $requested_quantity = $_POST['requested_quantity'];
 
-// Fetch request information for the logged-in NGO user
-$request_query = $conn->prepare("
-    SELECT 
-        r.request_id, 
-        r.id AS inventory_id, 
-        i.name AS item_name, 
-        r.username, 
-        r.requested_quantity, 
-        r.status, 
-        r.request_date, 
-        r.approval_date, 
-        r.fulfillment_date
-    FROM 
-        requests r
-    JOIN 
-        inventory i ON r.id = i.id
-    WHERE 
-        r.username = ?
-    ORDER BY 
-        r.request_date DESC
-");
-$request_query->bind_param("s", $username);
-$request_query->execute();
-$request_result = $request_query->get_result();
+    // Insert request into the database using inventory_id
+    $stmt = $conn->prepare("INSERT INTO requests (inventory_id, username, requested_quantity, status, request_date) VALUES (?, ?, ?, 'pending', NOW())");
+    $username = $_SESSION['username'];  // Assuming username is stored in the session
+    $stmt->bind_param("isi", $item_id, $username, $requested_quantity);
+
+    if ($stmt->execute()) {
+        // Redirect back to item.php with a success message
+        header("Location: item.php?request=success");
+        exit();
+    } else {
+        echo "Error: " . $stmt->error;
+    }
+}
+
+// Retrieve requests with item_name by joining inventory table
+$request_query = "
+    SELECT r.request_id, r.inventory_id, i.name AS item_name, r.username, r.requested_quantity, r.status, r.request_date, r.approval_date, r.fulfillment_date
+    FROM requests r
+    JOIN inventory i ON r.inventory_id = i.id
+    WHERE r.username = ?
+";
+$request_stmt = $conn->prepare($request_query);
+$request_stmt->bind_param("s", $_SESSION['username']);
+$request_stmt->execute();
+$request_result = $request_stmt->get_result();
 ?>
 
 <!DOCTYPE html>
