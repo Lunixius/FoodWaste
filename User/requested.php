@@ -7,44 +7,14 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Start the session to retrieve the username
+// Start the session to retrieve the username and user type
 session_start();
 $username = $_SESSION['username']; // Ensure 'username' is correctly set in session
+$user_type = $_SESSION['user_type']; // Ensure 'user_type' is correctly set in session
 
-// Initialize a flag to track if a request was made successfully
-$request_success = false;
 
-// Handle form submission for making a request
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['requested_quantity'])) {
-    $item_id = $_POST['item_id'];
-    $requested_quantity = $_POST['requested_quantity'];
-    
-    // Fetch item name
-    $item_query = $conn->query("SELECT name FROM inventory WHERE id = $item_id");
-    if ($item_query && $item_query->num_rows > 0) {
-        $item_row = $item_query->fetch_assoc();
-        $item_name = $item_row['name'];
-
-        // Insert request into the requests table
-        $stmt = $conn->prepare("INSERT INTO requests (id, name, username, requested_quantity, status, request_date) VALUES (?, ?, ?, ?, 'pending', NOW())");
-        $stmt->bind_param("issi", $item_id, $item_name, $username, $requested_quantity);
-        
-        if ($stmt->execute()) {
-            $request_success = true; // Set flag to true if request is successful
-            // Redirect to the same page to prevent form resubmission
-            header("Location: request.php?success=1");
-            exit();
-        } else {
-            echo "Error making request: " . $stmt->error;
-        }
-        $stmt->close();
-    } else {
-        echo "Item not found.";
-    }
-}
-
-// Fetch requests to display
-$request_result = $conn->query("SELECT * FROM requests WHERE username = '$username'");
+// Fetch requests to display for items donated by the restaurant user
+$request_result = $conn->query("SELECT * FROM requests WHERE username IN (SELECT donor FROM inventory WHERE donor = '$username')");
 
 // Close the database connection
 $conn->close();
@@ -57,7 +27,7 @@ $conn->close();
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <title>My Requests</title>
+    <title>Requests for My Items</title>
     <style>
         body {
             font-family: 'Lato', sans-serif;
@@ -86,13 +56,6 @@ $conn->close();
         tr:hover {
             background-color: #f5f5f5;
         }
-        .alert-popup {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            min-width: 250px;
-            z-index: 1050;
-        }
     </style>
 </head>
 <body>
@@ -100,14 +63,7 @@ $conn->close();
     <?php include 'navbar.php'; ?>
 
     <div class="container">
-        <h2>My Requests</h2>
-
-        <?php if (isset($_GET['success'])): ?>
-            <div class="alert alert-success alert-popup" role="alert">
-                Request made successfully!
-            </div>
-        <?php endif; ?>
-
+        <h2>Requests for My Items</h2>
         <table class="table table-bordered">
             <thead>
                 <tr>
@@ -129,8 +85,8 @@ $conn->close();
                         while ($row = $request_result->fetch_assoc()) {
                             echo "<tr>";
                             echo "<td>" . htmlspecialchars($row['request_id']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['id']) . "</td>"; // Using 'id' instead of 'inventory_id'
-                            echo "<td>" . htmlspecialchars($row['name']) . "</td>"; // 'name' should match the column in 'requests' table
+                            echo "<td>" . htmlspecialchars($row['id']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['name']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['username']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['status']) . "</td>";
@@ -145,7 +101,7 @@ $conn->close();
                     }
                 } else {
                     // Display error within a row if query fails
-                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
+                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests.</td></tr>";
                 }
                 ?>
             </tbody>
@@ -153,16 +109,5 @@ $conn->close();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Automatically hide the success message after a few seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            var alertPopup = document.querySelector('.alert-popup');
-            if (alertPopup) {
-                setTimeout(function() {
-                    alertPopup.classList.add('fade');
-                }, 3000);
-            }
-        });
-    </script>
 </body>
 </html>

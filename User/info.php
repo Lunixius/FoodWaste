@@ -52,15 +52,8 @@ if ($inventory_result->num_rows === 0) {
 
 $inventory = $inventory_result->fetch_assoc();
 
-// Fetch edit history if available (assuming there's an `edit_history` table storing edit logs)
-$history_query = $conn->prepare("SELECT * FROM edit_history WHERE inventory_id = ?");
-
-$inventory_id = $_GET['id'];
-$change_description = "Edited inventory item details."; // Change description accordingly
-
-$edit_history_query = $conn->prepare("INSERT INTO edit_history (inventory_id, change_description) VALUES (?, ?)");
-$edit_history_query->bind_param("is", $inventory_id, $change_description);
-$edit_history_query->execute();
+// Close the database connection
+$conn->close();
 
 ?>
 
@@ -138,71 +131,10 @@ $edit_history_query->execute();
             <label for="last_modified">Last Modified</label>
             <input type="text" class="form-control" id="last_modified" value="<?php echo htmlspecialchars($inventory['last_modified']); ?>" readonly>
         </div>
-
-        <!-- Edit History Section (if available) -->
-        <div class="form-group">
-            <label for="edit_history">Edit History</label>
-            <?php
-            // Check if the edit_history table exists
-            $table_exists_query = $conn->query("SHOW TABLES LIKE 'edit_history'");
-            if ($table_exists_query->num_rows > 0) {
-                // Table exists, fetch edit history if available
-                $history_query = $conn->prepare("SELECT * FROM edit_history WHERE inventory_id = ?");
-                $history_query->bind_param("i", $inventory_id);
-                $history_query->execute();
-                $history_result = $history_query->get_result();
-
-                if ($history_result->num_rows > 0): ?>
-                    <ul>
-                        <?php while ($history = $history_result->fetch_assoc()): ?>
-                            li><?php echo htmlspecialchars($history['edit_time']) . " - " . htmlspecialchars($history['change_description']); ?></li>
-                        <?php endwhile; ?>
-                    </ul>
-                <?php else: ?>
-                    <p>No edit history available.</p>
-                <?php endif; ?>
-            <?php } else { ?>
-                <p>Edit history is not available as the edit_history table does not exist.</p>
-            <?php } ?>
-        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js">
-    document.querySelector('form').addEventListener('submit', function(event) {
-        event.preventDefault();  // Prevent the default form submission
-        var confirmationMessage = document.getElementById('confirmation-message');
-        var successMessage = document.getElementById('success-message');
-        
-        confirmationMessage.style.display = 'block';
-
-        if (confirm('Are you sure you want to update this item?')) {
-            var formData = new FormData(this);
-            fetch('edit.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    confirmationMessage.style.display = 'none';
-                    successMessage.style.display = 'block';
-                    setTimeout(function() {
-                        window.location.href = 'inventory.php';
-                    }, 2000);
-                } else {
-                    confirmationMessage.style.display = 'none';
-                    alert('Failed to update inventory item.');
-                }
-            })
-            .catch(error => {
-                confirmationMessage.style.display = 'none';
-                alert('An error occurred while updating the inventory item.');
-            });
-        } else {
-            confirmationMessage.style.display = 'none';
-        }
-    });
-</script>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+

@@ -103,7 +103,7 @@ if (isset($_POST['logout'])) {
                         <a class="nav-link" href="<?php echo ($user_type === 'NGO') ? 'item.php' : 'inventory.php'; ?>">Inventory</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="request.php">Requests</a>
+                        <a class="nav-link" href="<?php echo ($user_type === 'NGO') ? 'request.php' : 'requested.php'; ?>">Requests</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="contacts.php">Contacts</a>
@@ -120,19 +120,16 @@ if (isset($_POST['logout'])) {
             </div>
 
             <!-- Logout Button -->
-            <div class="logout-icon" onclick="logout()">
+            <div class="logout-icon" onclick="document.getElementById('logoutForm').submit();">
                 <i class="fa-solid fa-power-off"></i>
             </div>
         </div>
     </nav>
 
-    <script>
-        function logout() {
-            // Clear session and redirect to login page
-            document.cookie = 'PHPSESSID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            window.location.href = "user_login.php";
-        }
-    </script>
+    <!-- Hidden Logout Form -->
+    <form id="logoutForm" method="post" action="">
+        <input type="hidden" name="logout" value="1">
+    </form>
 
     <!-- Move Bootstrap JS to the end of the body to ensure proper initialization -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>

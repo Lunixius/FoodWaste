@@ -130,6 +130,14 @@ $conn->close();
                 <h2>Delivery</h2>
                 <a href="delivery.php">Delivery</a>
             </div>
+            <div class="card">
+                <h2>Requests</h2>
+                <?php if ($user_type === 'NGO'): ?>
+                    <a href="request.php">View My Requests</a>
+                <?php else: ?>
+                    <a href="requested.php">Manage Requests</a>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </body>
