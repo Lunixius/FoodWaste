@@ -119,7 +119,7 @@ $conn->close();
                     <th>Status</th>
                     <th>Request Date</th>
                     <th>Approval Date</th>
-                    <th>Fulfillment Date</th>
+                    <th>Pickup Date</th>
                 </tr>
             </thead>
             <tbody>

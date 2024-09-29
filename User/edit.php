@@ -100,6 +100,10 @@ if ($inventory_result->num_rows === 0) {
 }
 
 $item = $inventory_result->fetch_assoc();
+
+$inventory_query->close();
+$user_query->close();
+$conn->close();
 ?>
 
 
@@ -241,9 +245,3 @@ $item = $inventory_result->fetch_assoc();
     </script>
 </body>
 </html>
-
-<?php
-$inventory_query->close();
-$user_query->close();
-$conn->close();
-?>

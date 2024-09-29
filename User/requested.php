@@ -12,11 +12,20 @@ session_start();
 $username = $_SESSION['username']; // Ensure 'username' is correctly set in session
 $user_type = $_SESSION['user_type']; // Ensure 'user_type' is correctly set in session
 
-
-// Fetch requests to display for items donated by the restaurant user
-$request_result = $conn->query("SELECT * FROM requests WHERE username IN (SELECT donor FROM inventory WHERE donor = '$username')");
+// Fetch requests related to the restaurant's inventory items
+$request_query = "
+    SELECT r.request_id, r.id, r.name, r.username, r.requested_quantity, r.status, r.request_date, r.approval_date, r.fulfillment_date 
+    FROM requests r
+    JOIN inventory i ON r.id = i.id
+    WHERE i.donor = ?
+";
+$stmt = $conn->prepare($request_query);
+$stmt->bind_param("s", $username);  // Bind the donor username to the query
+$stmt->execute();
+$request_result = $stmt->get_result();
 
 // Close the database connection
+$stmt->close();
 $conn->close();
 ?>
 
@@ -75,7 +84,8 @@ $conn->close();
                     <th>Status</th>
                     <th>Request Date</th>
                     <th>Approval Date</th>
-                    <th>Fulfillment Date</th>
+                    <th>Pickup Date</th>
+                    <th>Action</th> <!-- New Action column -->
                 </tr>
             </thead>
             <tbody>
@@ -93,15 +103,23 @@ $conn->close();
                             echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
                             echo "<td>" . ($row['approval_date'] ? htmlspecialchars($row['approval_date']) : 'N/A') . "</td>";
                             echo "<td>" . ($row['fulfillment_date'] ? htmlspecialchars($row['fulfillment_date']) : 'N/A') . "</td>";
+
+                            // Action column logic
+                            if ($row['status'] === 'approved') {
+                                echo "<td><a href='delivery.php?request_id=" . htmlspecialchars($row['request_id']) . "' class='btn btn-primary'>View</a></td>";
+                            } else {
+                                echo "<td>Waiting for approval</td>";
+                            }
+
                             echo "</tr>";
                         }
                     } else {
                         // Display message within a row if no requests found
-                        echo "<tr><td colspan='9' class='text-center'>No requests found.</td></tr>";
+                        echo "<tr><td colspan='10' class='text-center'>No requests found.</td></tr>";
                     }
                 } else {
                     // Display error within a row if query fails
-                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests.</td></tr>";
+                    echo "<tr><td colspan='10' class='text-center'>Error fetching requests.</td></tr>";
                 }
                 ?>
             </tbody>

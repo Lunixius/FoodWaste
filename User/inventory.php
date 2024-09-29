@@ -204,7 +204,7 @@ $inventory_result = $inventory_query->get_result();
                         <td><?php echo htmlspecialchars($row['date_created']); ?></td>
                         <td><?php echo htmlspecialchars($row['last_modified']); ?></td>
                         <td>
-                        <a href="info.php?id=<?php echo $row['id']; ?>" class="btn btn-info btn-sm btn-spacing">Info</a>
+                        <a href="info.php?id=<?php echo $row['id']; ?>" class="btn btn-info btn-sm btn-spacing">View details</a>
                         <?php if ($row['donor'] == $username): ?>
                             <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm btn-spacing">Edit</a>
                             <form action="" method="POST" class="d-inline">

@@ -126,7 +126,7 @@ $conn->close();
     <?php include 'navbar.php'; ?>
 
     <div class="container">
-        <h2>Available Inventory for NGOs</h2>
+        <h2>Available Items</h2>
 
         <!-- Filter and Search Bar -->
         <div class="filter-bar">
