@@ -81,17 +81,21 @@ $inventory_result = $inventory_query->get_result();
             width: 100%;
             margin-top: 20px;
         }
-        table th, table td {
+        
+        table th, td {
             text-align: center;
             vertical-align: middle;
+            white-space: nowrap; /* Prevents wrapping */
+            max-width: 220px; /* Adjusts the maximum width to fit the image */
         }
+
         .add-button {
             float: right;
             margin-bottom: 20px;
         }
         .inventory-image {
-            max-width: 100px;
-            max-height: 100px;
+            max-width: 200px;
+            max-height: 200px;
             object-fit: cover;
             border: 1px solid #ddd;
             padding: 5px;

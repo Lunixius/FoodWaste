@@ -120,6 +120,7 @@ $conn->close();
                     <th>Request Date</th>
                     <th>Approval Date</th>
                     <th>Pickup Date</th>
+                    <th>Action</th> <!-- New Action column -->
                 </tr>
             </thead>
             <tbody>
@@ -137,15 +138,27 @@ $conn->close();
                             echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
                             echo "<td>" . ($row['approval_date'] ? htmlspecialchars($row['approval_date']) : 'N/A') . "</td>";
                             echo "<td>" . ($row['fulfillment_date'] ? htmlspecialchars($row['fulfillment_date']) : 'N/A') . "</td>";
+
+                            // New Action column logic
+                            echo "<td>";
+                            if ($row['status'] === 'approved') {
+                                echo "<a href='pickup.php?request_id=" . htmlspecialchars($row['request_id']) . "' class='btn btn-primary'>View</a>";
+                            } elseif ($row['status'] === 'rejected') {
+                                echo "<span class='text-danger'>Not approved</span>";
+                            } else {
+                                echo "Waiting for approval";
+                            }
+                            echo "</td>";
+
                             echo "</tr>";
                         }
                     } else {
                         // Display message within a row if no requests found
-                        echo "<tr><td colspan='9' class='text-center'>No requests found.</td></tr>";
+                        echo "<tr><td colspan='10' class='text-center'>No requests found.</td></tr>";
                     }
                 } else {
                     // Display error within a row if query fails
-                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
+                    echo "<tr><td colspan='10' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
                 }
                 ?>
             </tbody>
