@@ -2,29 +2,22 @@
 // Include the database connection and session
 $conn = new mysqli('localhost', 'root', '', 'foodwaste');
 session_start();
-include 'navbar.php';
 
-// Fetch approved requests for NGO
-$query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, r.username AS restaurant_username, 
-                 u.phone AS restaurant_phone, r.requested_quantity, r.receive_method, r.receive_time, r.address
+// Fetch approved requests for NGO user
+$ngo_username = $_SESSION['username'];  // Assuming username is stored in session for logged-in NGO
+
+// Updated query to fetch restaurant's information by joining with the inventory table
+$query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, 
+                 i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
+                 r.requested_quantity, r.status
           FROM requests r
-          JOIN users u ON r.username = u.username
-          WHERE r.status = 'approved' AND u.user_type = 'restaurant'";
-$result = $conn->query($query);
-
-// Handle form submission for receiving method and address
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $request_id = $_POST['request_id'];
-    $receive_method = $_POST['receive_method'];
-    $receive_time = $_POST['receive_time'];
-    $address = $receive_method === 'pickup' ? $_POST['address'] : 'N/A';
-
-    // Update request in the database
-    $update = $conn->prepare("UPDATE requests SET receive_method = ?, receive_time = ?, address = ? WHERE request_id = ?");
-    $update->bind_param("sssi", $receive_method, $receive_time, $address, $request_id);
-    $update->execute();
-}
-
+          JOIN inventory i ON r.id = i.id
+          JOIN user u ON i.donor = u.username
+          WHERE r.status = 'approved' AND r.username = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("s", $ngo_username);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -32,12 +25,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NGO Pickup</title>
+    <title>NGO Requests</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .disabled-btn {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+    </style>
 </head>
 <body>
+    <?php include 'navbar.php'; ?>
     <div class="container">
-        <h2>Approved Requests for Pickup</h2>
+        <h2>Approved Requests</h2>
         <table class="table table-bordered">
             <thead>
                 <tr>
@@ -47,9 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <th>Restaurant Username</th>
                     <th>Phone Number</th>
                     <th>Requested Quantity</th>
-                    <th>Food Receive Method</th>
-                    <th>Receive Time</th>
-                    <th>Address</th>
+                    <th>Receive Method</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -63,29 +61,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <td><?= htmlspecialchars($row['restaurant_phone']) ?></td>
                         <td><?= htmlspecialchars($row['requested_quantity']) ?></td>
                         <td>
-                            <!-- Form for NGO to choose receive method -->
-                            <form method="POST">
-                                <input type="hidden" name="request_id" value="<?= $row['request_id'] ?>">
-                                <select name="receive_method" class="form-control" required>
-                                    <option value="">Choose Method</option>
-                                    <option value="delivery" <?= $row['receive_method'] === 'delivery' ? 'selected' : '' ?>>Delivery</option>
-                                    <option value="pickup" <?= $row['receive_method'] === 'pickup' ? 'selected' : '' ?>>Pickup</option>
-                                </select>
+                            <!-- Dropdown for selecting Receive Method -->
+                            <select class="form-select receive-method" data-request-id="<?= $row['request_id'] ?>">
+                                <option value="">Select Method</option>
+                                <option value="delivery">Delivery</option>
+                                <option value="pickup">Pickup</option>
+                            </select>
                         </td>
                         <td>
-                            <!-- Input for receive time -->
-                            <input type="datetime-local" name="receive_time" class="form-control" value="<?= $row['receive_time'] ?>" required>
-                        </td>
-                        <td>
-                            <!-- Address input if method is pickup -->
-                            <?php if ($row['receive_method'] === 'pickup'): ?>
-                                <input type="text" name="address" class="form-control" value="<?= htmlspecialchars($row['address']) ?>" required>
-                            <?php else: ?>
-                                <span>N/A</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <button type="submit" class="btn btn-primary">Submit</button>
+                            <!-- View Button that redirects to pickup_info.php or is disabled based on selection -->
+                            <form method="GET" action="pickup_info.php">
+                                <input type="hidden" name="request_id" value="<?= htmlspecialchars($row['request_id']) ?>">
+                                <button type="submit" class="btn btn-info action-btn disabled-btn" disabled>View</button>
                             </form>
                         </td>
                     </tr>
@@ -93,6 +80,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </tbody>
         </table>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // JavaScript to handle receive method selection and enable/disable buttons
+        document.querySelectorAll('.receive-method').forEach(select => {
+            select.addEventListener('change', function() {
+                const requestId = this.getAttribute('data-request-id');
+                const selectedMethod = this.value;
+                const button = this.closest('tr').querySelector('.action-btn');
+
+                if (selectedMethod === 'delivery') {
+                    button.classList.remove('disabled-btn');
+                    button.disabled = false;
+                } else if (selectedMethod === 'pickup') {
+                    button.classList.add('disabled-btn');
+                    button.disabled = true;
+                } else {
+                    button.classList.add('disabled-btn');
+                    button.disabled = true;
+                }
+            });
+        });
+    </script>
 </body>
 </html>

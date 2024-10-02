@@ -32,7 +32,7 @@ $user_type_query->bind_param("s", $username);
 $user_type_query->execute();
 $user_type_result = $user_type_query->get_result();
 $user = $user_type_result->fetch_assoc();
-$user_type = $user['user_type'];
+$user_type = $user['user_type']; // Store user type for dynamic menu items
 
 if (isset($_POST['logout'])) {
     session_unset();
@@ -40,6 +40,9 @@ if (isset($_POST['logout'])) {
     header("Location: user_login.php");
     exit();
 }
+
+// Close the database connection
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -109,7 +112,10 @@ if (isset($_POST['logout'])) {
                         <a class="nav-link" href="contacts.php">Contacts</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="delivery.php">Delivery</a>
+                        <!-- Dynamic label and link for Delivery/Pickup -->
+                        <a class="nav-link" href="<?php echo ($user_type === 'NGO') ? 'pickup.php' : 'delivery.php'; ?>">
+                            <?php echo ($user_type === 'NGO') ? 'Pickup' : 'Delivery'; ?>
+                        </a>
                     </li>
                 </ul>
             </div>
@@ -136,7 +142,3 @@ if (isset($_POST['logout'])) {
 </body>
 </html>
 
-<?php
-// Close the database connection
-$conn->close();
-?>

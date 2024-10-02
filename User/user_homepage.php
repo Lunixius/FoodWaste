@@ -124,8 +124,10 @@ $conn->close();
                 <a href="contacts.php">Contact</a>
             </div>
             <div class="card">
-                <h2>Delivery</h2>
-                <a href="delivery.php">Delivery</a>
+                    <h2><?php echo ($user_type === 'NGO') ? 'Pickup' : 'Delivery'; ?></h2>
+                <a href="<?php echo ($user_type === 'NGO') ? 'pickup.php' : 'delivery.php'; ?>">
+                    <?php echo ($user_type === 'NGO') ? 'Pickup Details' : 'Delivery Details'; ?>
+                </a>
             </div>
             <div class="card">
                 <h2>Requests</h2>

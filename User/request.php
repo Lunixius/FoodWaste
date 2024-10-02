@@ -9,6 +9,11 @@ if ($conn->connect_error) {
 
 // Start the session to retrieve the NGO's username
 session_start();
+if (!isset($_SESSION['username'])) {
+    // Redirect to login page if not logged in
+    header("Location: login.php");
+    exit();
+}
 $ngo_username = $_SESSION['username']; // Ensure 'username' is correctly set in session for NGO
 
 // Initialize a flag to track if a request was made successfully
@@ -18,18 +23,22 @@ $request_success = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['requested_quantity'])) {
     $item_id = $_POST['item_id'];
     $requested_quantity = $_POST['requested_quantity'];
-    
-    // Fetch item details including the restaurant username (donor)
-    $item_query = $conn->query("SELECT name, donor FROM inventory WHERE id = $item_id");
+
+    // Use prepared statement to avoid SQL injection
+    $stmt = $conn->prepare("SELECT name, donor FROM inventory WHERE id = ?");
+    $stmt->bind_param("i", $item_id);
+    $stmt->execute();
+    $item_query = $stmt->get_result();
+
     if ($item_query && $item_query->num_rows > 0) {
         $item_row = $item_query->fetch_assoc();
         $item_name = $item_row['name'];
         $restaurant_username = $item_row['donor']; // Donor is the restaurant
 
-        // Insert request into the requests table
+        // Insert request into the requests table using a prepared statement
         $stmt = $conn->prepare("INSERT INTO requests (id, name, username, requested_quantity, status, request_date) VALUES (?, ?, ?, ?, 'pending', NOW())");
         $stmt->bind_param("issi", $item_id, $item_name, $ngo_username, $requested_quantity);
-        
+
         if ($stmt->execute()) {
             $request_success = true; // Set flag to true if request is successful
             // Redirect to the same page to prevent form resubmission
@@ -146,7 +155,7 @@ $conn->close();
                             // New Action column logic
                             echo "<td>";
                             if ($row['status'] === 'approved') {
-                                echo "<a href='pickup.php?request_id=" . htmlspecialchars($row['request_id']) . "' class='btn btn-primary'>View</a>";
+                                echo "<a href='pickup.php?request_id=" . $row['request_id'] . "' class='btn btn-primary'>View</a>";
                             } elseif ($row['status'] === 'rejected') {
                                 echo "<span class='text-danger'>Not approved</span>";
                             } else {
