@@ -1,48 +1,30 @@
 <?php
-// Include database connection
+// Include the database connection and session
 $conn = new mysqli('localhost', 'root', '', 'foodwaste');
-
-// Check the connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Start session
 session_start();
-$restaurant_username = $_SESSION['username']; // Ensure username is set
-$request_id = $_GET['request_id']; // Get the request ID from the URL
+include 'navbar.php';
 
-// Fetch request details
-$request_query = "SELECT r.name, r.receive_method, r.delivery_date, r.status, i.donor
-                  FROM requests r
-                  JOIN inventory i ON r.id = i.id
-                  WHERE r.request_id = ?";
-$stmt = $conn->prepare($request_query);
-$stmt->bind_param("i", $request_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$request = $result->fetch_assoc();
+// Fetch approved requests for NGO
+$query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, r.username AS restaurant_username, 
+                 u.phone AS restaurant_phone, r.requested_quantity, r.receive_method, r.receive_time, r.address
+          FROM requests r
+          JOIN users u ON r.username = u.username
+          WHERE r.status = 'approved' AND u.user_type = 'restaurant'";
+$result = $conn->query($query);
 
-// Handle form submission to confirm delivery/pickup
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $address = $_POST['address']; // Get the address provided by the restaurant
-    $confirmation_status = 'approved'; // Set status to approved after confirmation
+// Handle form submission for receiving method and address
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $request_id = $_POST['request_id'];
+    $receive_method = $_POST['receive_method'];
+    $receive_time = $_POST['receive_time'];
+    $address = $receive_method === 'pickup' ? $_POST['address'] : 'N/A';
 
-    // Update request status and address
-    $update_query = "UPDATE requests SET status = ?, fulfillment_date = ?, address = ? WHERE request_id = ?";
-    $fulfillment_date = date('Y-m-d'); // Current date
-    $stmt = $conn->prepare($update_query);
-    $stmt->bind_param("sssi", $confirmation_status, $fulfillment_date, $address, $request_id);
-    if ($stmt->execute()) {
-        echo "<div class='alert alert-success'>Request confirmed successfully. The NGO will be notified.</div>";
-    } else {
-        echo "<div class='alert alert-danger'>Failed to confirm request.</div>";
-    }
-    $stmt->close();
+    // Update request in the database
+    $update = $conn->prepare("UPDATE requests SET receive_method = ?, receive_time = ?, address = ? WHERE request_id = ?");
+    $update->bind_param("sssi", $receive_method, $receive_time, $address, $request_id);
+    $update->execute();
 }
 
-// Close the connection
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -50,32 +32,66 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirm Delivery/Pickup</title>
+    <title>NGO Pickup</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Lato', sans-serif;
-        }
-        .container {
-            margin-top: 50px;
-        }
-    </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <?php include 'navbar.php'; ?>
-    
     <div class="container">
-        <h2>Confirm Delivery/Pickup for "<?php echo htmlspecialchars($request['name']); ?>"</h2>
-
-        <form method="post">
-            <div class="mb-3">
-                <label for="address" class="form-label">Provide Address for NGO Pickup:</label>
-                <input type="text" class="form-control" id="address" name="address" required>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Confirm</button>
-        </form>
+        <h2>Approved Requests for Pickup</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>Inventory ID</th>
+                    <th>Item Name</th>
+                    <th>Restaurant Username</th>
+                    <th>Phone Number</th>
+                    <th>Requested Quantity</th>
+                    <th>Food Receive Method</th>
+                    <th>Receive Time</th>
+                    <th>Address</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php while ($row = $result->fetch_assoc()): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($row['request_id']) ?></td>
+                        <td><?= htmlspecialchars($row['inventory_id']) ?></td>
+                        <td><?= htmlspecialchars($row['item_name']) ?></td>
+                        <td><?= htmlspecialchars($row['restaurant_username']) ?></td>
+                        <td><?= htmlspecialchars($row['restaurant_phone']) ?></td>
+                        <td><?= htmlspecialchars($row['requested_quantity']) ?></td>
+                        <td>
+                            <!-- Form for NGO to choose receive method -->
+                            <form method="POST">
+                                <input type="hidden" name="request_id" value="<?= $row['request_id'] ?>">
+                                <select name="receive_method" class="form-control" required>
+                                    <option value="">Choose Method</option>
+                                    <option value="delivery" <?= $row['receive_method'] === 'delivery' ? 'selected' : '' ?>>Delivery</option>
+                                    <option value="pickup" <?= $row['receive_method'] === 'pickup' ? 'selected' : '' ?>>Pickup</option>
+                                </select>
+                        </td>
+                        <td>
+                            <!-- Input for receive time -->
+                            <input type="datetime-local" name="receive_time" class="form-control" value="<?= $row['receive_time'] ?>" required>
+                        </td>
+                        <td>
+                            <!-- Address input if method is pickup -->
+                            <?php if ($row['receive_method'] === 'pickup'): ?>
+                                <input type="text" name="address" class="form-control" value="<?= htmlspecialchars($row['address']) ?>" required>
+                            <?php else: ?>
+                                <span>N/A</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+            </tbody>
+        </table>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

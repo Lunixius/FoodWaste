@@ -7,9 +7,9 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Start the session to retrieve the username
+// Start the session to retrieve the NGO's username
 session_start();
-$username = $_SESSION['username']; // Ensure 'username' is correctly set in session
+$ngo_username = $_SESSION['username']; // Ensure 'username' is correctly set in session for NGO
 
 // Initialize a flag to track if a request was made successfully
 $request_success = false;
@@ -19,15 +19,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['re
     $item_id = $_POST['item_id'];
     $requested_quantity = $_POST['requested_quantity'];
     
-    // Fetch item name
-    $item_query = $conn->query("SELECT name FROM inventory WHERE id = $item_id");
+    // Fetch item details including the restaurant username (donor)
+    $item_query = $conn->query("SELECT name, donor FROM inventory WHERE id = $item_id");
     if ($item_query && $item_query->num_rows > 0) {
         $item_row = $item_query->fetch_assoc();
         $item_name = $item_row['name'];
+        $restaurant_username = $item_row['donor']; // Donor is the restaurant
 
         // Insert request into the requests table
         $stmt = $conn->prepare("INSERT INTO requests (id, name, username, requested_quantity, status, request_date) VALUES (?, ?, ?, ?, 'pending', NOW())");
-        $stmt->bind_param("issi", $item_id, $item_name, $username, $requested_quantity);
+        $stmt->bind_param("issi", $item_id, $item_name, $ngo_username, $requested_quantity);
         
         if ($stmt->execute()) {
             $request_success = true; // Set flag to true if request is successful
@@ -43,8 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['re
     }
 }
 
-// Fetch requests to display
-$request_result = $conn->query("SELECT * FROM requests WHERE username = '$username'");
+// Fetch requests to display along with restaurant (donor) information
+$request_result = $conn->query("
+    SELECT r.request_id, r.id, r.name, r.username AS ngo_username, r.requested_quantity, r.status, r.request_date, r.approval_date, i.donor AS restaurant_username 
+    FROM requests r
+    JOIN inventory i ON r.id = i.id
+    WHERE r.username = '$ngo_username'
+");
 
 // Close the database connection
 $conn->close();
@@ -114,13 +120,12 @@ $conn->close();
                     <th>Request ID</th>
                     <th>Inventory ID</th>
                     <th>Item Name</th>
-                    <th>Username</th>
+                    <th>Restaurant Username</th>
                     <th>Requested Quantity</th>
                     <th>Status</th>
                     <th>Request Date</th>
                     <th>Approval Date</th>
-                    <th>Pickup Date</th>
-                    <th>Action</th> <!-- New Action column -->
+                    <th>Action</th> 
                 </tr>
             </thead>
             <tbody>
@@ -132,12 +137,11 @@ $conn->close();
                             echo "<td>" . htmlspecialchars($row['request_id']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['id']) . "</td>"; // Using 'id' instead of 'inventory_id'
                             echo "<td>" . htmlspecialchars($row['name']) . "</td>"; // 'name' should match the column in 'requests' table
-                            echo "<td>" . htmlspecialchars($row['username']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['restaurant_username']) . "</td>"; // Show restaurant's username
                             echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['status']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
                             echo "<td>" . ($row['approval_date'] ? htmlspecialchars($row['approval_date']) : 'N/A') . "</td>";
-                            echo "<td>" . ($row['fulfillment_date'] ? htmlspecialchars($row['fulfillment_date']) : 'N/A') . "</td>";
 
                             // New Action column logic
                             echo "<td>";
@@ -154,11 +158,11 @@ $conn->close();
                         }
                     } else {
                         // Display message within a row if no requests found
-                        echo "<tr><td colspan='10' class='text-center'>No requests found.</td></tr>";
+                        echo "<tr><td colspan='9' class='text-center'>No requests found.</td></tr>";
                     }
                 } else {
                     // Display error within a row if query fails
-                    echo "<tr><td colspan='10' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
+                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
                 }
                 ?>
             </tbody>

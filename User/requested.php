@@ -14,7 +14,7 @@ $user_type = $_SESSION['user_type']; // Ensure 'user_type' is correctly set in s
 
 // Fetch requests related to the restaurant's inventory items
 $request_query = "
-    SELECT r.request_id, r.id, r.name, r.username, r.requested_quantity, r.status, r.request_date, r.approval_date, r.fulfillment_date 
+    SELECT r.request_id, r.id, r.name, r.username, r.requested_quantity, r.status, r.request_date, r.approval_date 
     FROM requests r
     JOIN inventory i ON r.id = i.id
     WHERE i.donor = ?
@@ -84,7 +84,6 @@ $conn->close();
                     <th>Status</th>
                     <th>Request Date</th>
                     <th>Approval Date</th>
-                    <th>Pickup Date</th>
                     <th>Action</th> <!-- New Action column -->
                 </tr>
             </thead>
@@ -102,7 +101,6 @@ $conn->close();
                             echo "<td>" . htmlspecialchars($row['status']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
                             echo "<td>" . ($row['approval_date'] ? htmlspecialchars($row['approval_date']) : 'N/A') . "</td>";
-                            echo "<td>" . ($row['fulfillment_date'] ? htmlspecialchars($row['fulfillment_date']) : 'N/A') . "</td>";
 
                             // Action column logic
                             if ($row['status'] === 'approved') {
@@ -115,11 +113,11 @@ $conn->close();
                         }
                     } else {
                         // Display message within a row if no requests found
-                        echo "<tr><td colspan='10' class='text-center'>No requests found.</td></tr>";
+                        echo "<tr><td colspan='9' class='text-center'>No requests found.</td></tr>";
                     }
                 } else {
                     // Display error within a row if query fails
-                    echo "<tr><td colspan='10' class='text-center'>Error fetching requests.</td></tr>";
+                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests.</td></tr>";
                 }
                 ?>
             </tbody>
