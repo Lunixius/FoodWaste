@@ -54,7 +54,7 @@ $conn->close();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Poppins', sans-serif;
         }
 
         .navbar {

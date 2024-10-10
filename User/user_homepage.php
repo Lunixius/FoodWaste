@@ -5,8 +5,8 @@ if (session_status() == PHP_SESSION_NONE) {
 
 // Database connection parameters
 $servername = "localhost";
-$db_username = "root";  // Replace with your database username
-$db_password = "";  // Replace with your database password
+$db_username = "root";  
+$db_password = "";  
 $dbname = "foodwaste";
 
 // Create a database connection
@@ -39,72 +39,79 @@ $conn->close();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Lato', sans-serif;
-            background-color: #f0f8ff;
-            margin: 0;
-            padding: 0;
-        }
+    body {
+        font-family: 'Poppins', sans-serif;
+    }
 
-        .container {
-            max-width: 90%;
-            margin: 20px auto;
-        }
+    /* Background color for NGO users */
+    .ngo-background {
+        background-color: #e9f5f5; /* Example color for NGO */
+    }
 
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 40px;
-        }
+    /* Background color for Restaurant users */
+    .restaurant-background {
+        background-color: #f0e6ff; /* Example color for Restaurant */
+    }
 
-        .cards {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 30px; /* Increased gap for better spacing */
-            padding: 20px;
-        }
+    .container {
+        max-width: 90%;
+        margin: 20px auto;
+    }
 
-        .card {
-            background-color: #fff;
-            width: 280px; /* Slightly increased card width */
-            padding: 25px; /* Increased padding */
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+    h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 40px;
+    }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-        }
+    .cards {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 30px;
+        padding: 20px;
+    }
 
-        .card h2 {
-            color: #4CAF50;
-            margin-bottom: 15px;
-            font-size: 20px;
-        }
+    .card {
+        background-color: #fff;
+        width: 280px;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
 
-        .card a {
-            text-decoration: none;
-            color: #FF9800;
-            font-size: 16px;
-            display: block;
-            margin-top: 10px;
-            transition: color 0.3s ease;
-        }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    }
 
-        .card a:hover {
-            color: #E65100;
-        }
+    .card h2 {
+        color: #4CAF50;
+        margin-bottom: 15px;
+        font-size: 20px;
+    }
+
+    .card a {
+        text-decoration: none;
+        color: #FF9800;
+        font-size: 16px;
+        display: block;
+        margin-top: 10px;
+        transition: color 0.3s ease;
+    }
+
+    .card a:hover {
+        color: #E65100;
+    }
     </style>
 </head>
-<body>
+<body class="<?php echo ($user_type === 'NGO') ? 'ngo-background' : 'restaurant-background'; ?>">
     <!-- Navigation Bar -->
     <?php include 'navbar.php'; ?>
-    </nav>
 
     <!-- Main Content -->
     <div class="container">
@@ -124,7 +131,7 @@ $conn->close();
                 <a href="contacts.php">Contact</a>
             </div>
             <div class="card">
-                    <h2><?php echo ($user_type === 'NGO') ? 'Pickup' : 'Delivery'; ?></h2>
+                <h2><?php echo ($user_type === 'NGO') ? 'Pickup' : 'Delivery'; ?></h2>
                 <a href="<?php echo ($user_type === 'NGO') ? 'pickup.php' : 'delivery.php'; ?>">
                     <?php echo ($user_type === 'NGO') ? 'Pickup Details' : 'Delivery Details'; ?>
                 </a>

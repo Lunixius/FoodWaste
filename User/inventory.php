@@ -57,6 +57,10 @@ $inventory_query = $conn->prepare("SELECT id, name, category, expiry_date, quant
 $inventory_query->bind_param("s", $username);
 $inventory_query->execute();
 $inventory_result = $inventory_query->get_result();
+
+// Close database connection
+$conn->close();
+
 ?>
 
 <!DOCTYPE html>
@@ -65,10 +69,14 @@ $inventory_result = $inventory_query->get_result();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <title>Inventory</title>
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Poppins', sans-serif;
+            background-color: #e9f5f5;
         }
         .navbar {
             background-color: #000;
@@ -78,15 +86,38 @@ $inventory_result = $inventory_query->get_result();
             margin-top: 50px;
         }
         table {
+            border-collapse: separate;
+            border-spacing: 0;
             width: 100%;
             margin-top: 20px;
+            border-radius: 5px;
+            overflow: hidden;
+            background-color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        
-        table th, td {
+        table th, table td {
             text-align: center;
             vertical-align: middle;
-            white-space: nowrap; /* Prevents wrapping */
-            max-width: 220px; /* Adjusts the maximum width to fit the image */
+            padding: 10px; /* Adds spacing for comfort */
+            border: 2px solid #007bff; /* Bolder borders with a nice color */
+            font-size: 14px; /* Adjusts text size for readability */
+        }
+
+        table th {
+            text-align: center;
+            vertical-align: middle;
+            font-weight: bold;
+            background-color: #343a40; /* Dark background color for contrast */
+            color: #ffffff; /* White text for visibility */
+            border: 2px solid #000; /* Bold borders */
+            padding: 10px;
+        }
+
+        table td {
+            text-align: center;
+            vertical-align: middle;
+            border: 2px solid #ddd; /* Light borders for cells */
+            padding: 10px;
         }
 
         .add-button {
@@ -105,25 +136,31 @@ $inventory_result = $inventory_query->get_result();
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
-            gap: 15px; /* Adds space between the search bar, filter, and button */
+            gap: 15px;
         }
-
         .search-box {
-            flex: 3; /* Occupies more width */
+            flex: 3;
         }
-
         .filter-box {
-            flex: 1; /* Occupies less width than search box */
-        }
-
-        .add-button {
-            margin-left: 10px;
             flex: 1;
         }
+        .btn-spacing {
+            margin-right: 10px;
+        }
 
+        #inventory-table th {
+            text-align: center;
+            vertical-align: middle;
+            font-weight: bold;
+            background-color: #f8f9fa; /* Light background color for header */
+            color: #000000; /* Black text color */
+            border: 2px solid #ddd; /* Light border for header */
+            padding: 10px;
+        }
+        
         /* Full-screen modal image */
         #image-modal {
-            display: none; /* Hidden by default */
+            display: none;
             position: fixed;
             z-index: 1000;
             left: 0;
@@ -132,7 +169,6 @@ $inventory_result = $inventory_query->get_result();
             height: 100%;
             background-color: rgba(0, 0, 0, 0.8);
         }
-
         #image-modal img {
             display: block;
             margin: auto;
@@ -140,11 +176,17 @@ $inventory_result = $inventory_query->get_result();
             max-height: 90%;
             object-fit: contain;
         }
-
-        .btn-spacing {
-            margin-right: 10px; /* Adjust this value for desired spacing */
+        #delete-message {
+            display: none;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
         }
-
     </style>
 </head>
 <body>
@@ -156,9 +198,6 @@ $inventory_result = $inventory_query->get_result();
 
         <!-- Filter and Search Bar -->
         <div class="filter-bar">
-            <input type="text" id="search" class="form-control search-box" placeholder="Search by name...">
-            <button id="search-btn" class="btn btn-primary" style="margin-top: 10px;">Search...</button>
-    
             <select id="category-filter" class="form-select filter-box" style="width: 200px;">
                 <option value="">All Categories</option>
                 <option value="Fruits and Vegetables">Fruits and Vegetables</option>
@@ -170,9 +209,8 @@ $inventory_result = $inventory_query->get_result();
                 <option value="Beverages">Beverages</option>
                 <option value="Condiments and Sauces">Condiments and Sauces</option>
             </select>
+            <a href="add.php" class="btn btn-success add-button">Add Item</a>
         </div>
-
-        <a href="add.php" class="btn btn-success add-button">Add Entity</a>
 
         <table class="table table-bordered" id="inventory-table">
             <thead>
@@ -208,16 +246,15 @@ $inventory_result = $inventory_query->get_result();
                         <td><?php echo htmlspecialchars($row['date_created']); ?></td>
                         <td><?php echo htmlspecialchars($row['last_modified']); ?></td>
                         <td>
-                        <a href="info.php?id=<?php echo $row['id']; ?>" class="btn btn-info btn-sm btn-spacing">View details</a>
-                        <?php if ($row['donor'] == $username): ?>
-                            <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm btn-spacing">Edit</a>
-                            <form action="" method="POST" class="d-inline">
-                                <input type="hidden" name="delete_id" value="<?php echo $row['id']; ?>">
-                                <button type="submit" class="btn btn-danger btn-sm btn-spacing" onclick="return confirm('Are you sure you want to delete this inventory item?');">Delete</button>
-                            </form>
-                        <?php endif; ?>
-                    </td>
-
+                            <a href="info.php?id=<?php echo $row['id']; ?>" class="btn btn-info btn-sm btn-spacing">View details</a>
+                            <?php if ($row['donor'] == $username): ?>
+                                <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm btn-spacing">Edit</a>
+                                <form action="" method="POST" class="d-inline">
+                                    <input type="hidden" name="delete_id" value="<?php echo $row['id']; ?>">
+                                    <button type="submit" class="btn btn-danger btn-sm btn-spacing" onclick="return confirm('Are you sure you want to delete this inventory item?');">Delete</button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endwhile; ?>
                 <?php if ($inventory_result->num_rows == 0): ?>
@@ -227,119 +264,82 @@ $inventory_result = $inventory_query->get_result();
                 <?php endif; ?>
             </tbody>
         </table>
-
-        <!-- Full-screen image modal -->
-        <div id="image-modal">
-            <img src="" alt="Full Screen Image">
-        </div>
     </div>
 
-    <div id="delete-message" style="display: none; position: fixed; top: 10px; right: 10px; background-color: #28a745; color: white; padding: 10px; border-radius: 5px; z-index: 1000;">
-        Inventory item deleted successfully!
+    <div id="image-modal" onclick="this.style.display='none'">
+        <img src="" alt="Full Image" id="full-image">
     </div>
 
+    <div id="delete-message"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Search Functionality
-        document.getElementById('search').addEventListener('input', function() {
-            var searchValue = this.value.toLowerCase();
-            var rows = document.querySelectorAll('.inventory-row');
-            rows.forEach(function(row) {
-                var name = row.cells[1].innerText.toLowerCase();
-                if (name.includes(searchValue)) {
-                    row.style.display = '';
+        // Handle category filtering
+        document.getElementById('category-filter').addEventListener('change', function () {
+            const selectedCategory = this.value;
+            const rows = document.querySelectorAll('.inventory-row');
+
+            rows.forEach(row => {
+                if (selectedCategory === "" || row.dataset.category === selectedCategory) {
+                    row.style.display = "";
                 } else {
-                    row.style.display = 'none';
+                    row.style.display = "none";
                 }
             });
         });
 
-        // Search by name when "Search..." button is clicked
-        document.getElementById('search-btn').addEventListener('click', function() {
-            var searchValue = document.getElementById('search').value.toLowerCase();
-            var rows = document.querySelectorAll('.inventory-row');
-            rows.forEach(function(row) {
-                var name = row.cells[1].innerText.toLowerCase();
-                if (name.includes(searchValue)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-
-        // Category Filter Functionality
-        document.getElementById('category-filter').addEventListener('change', function() {
-            var selectedCategory = this.value.toLowerCase();
-            var rows = document.querySelectorAll('.inventory-row');
-            rows.forEach(function(row) {
-                var category = row.dataset.category.toLowerCase();
-                if (selectedCategory === '' || category === selectedCategory) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-
-        // Full-screen image viewer
-        document.querySelectorAll('.inventory-image').forEach(function(img) {
-            img.addEventListener('click', function() {
-                var src = this.getAttribute('src');
-                var modal = document.getElementById('image-modal');
-                modal.querySelector('img').setAttribute('src', src);
+        // Handle image click for full-screen view
+        const images = document.querySelectorAll('.inventory-image');
+        images.forEach(img => {
+            img.addEventListener('click', function () {
+                const modal = document.getElementById('image-modal');
+                const fullImage = document.getElementById('full-image');
+                fullImage.src = this.src;
                 modal.style.display = 'block';
             });
         });
 
-        // Close modal on clicking outside of the image
-        document.getElementById('image-modal').addEventListener('click', function(e) {
-            if (e.target.tagName !== 'IMG') {
-                this.style.display = 'none';
-            }
-        });
+        // AJAX deletion handler
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault(); // Prevent the form from submitting normally
 
-        // Delete button functionality
-        document.querySelectorAll('.btn-danger').forEach(function(button) {
-        button.addEventListener('click', function(event) {
-            event.preventDefault(); // Prevent the form from submitting normally
+                const deleteId = this.querySelector('input[name="delete_id"]').value;
 
-            if (confirm('Are you sure you want to delete this inventory item?')) {
-                var deleteForm = this.closest('form');
-                var formData = new FormData(deleteForm);
+                fetch('', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'delete_id': deleteId,
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the row from the table
+                        const row = this.closest('tr');
+                        row.remove();
 
-                // Send AJAX request to delete the inventory item
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', '', true); // Send the request to the same page
-                xhr.onload = function() {
-                    if (xhr.status === 200) {
-                        try {
-                            var response = JSON.parse(xhr.responseText);
-                            if (response.success) {
-                                // Show success hover pop-up message
-                                var messageDiv = document.getElementById('delete-message');
-                                messageDiv.style.display = 'block';
-                                setTimeout(function() {
-                                    messageDiv.style.display = 'none';
-                                }, 2000); // Hide message after 2 seconds
+                        // Show success message
+                        const deleteMessage = document.getElementById('delete-message');
+                        deleteMessage.innerText = 'Item deleted successfully!';
+                        deleteMessage.style.display = 'block';
 
-                                // Optionally, remove the row from the table
-                                deleteForm.closest('tr').remove();
-                            } else {
-                                alert('Failed to delete the inventory item.');
-                            }
-                        } catch (e) {
-                            alert('An error occurred.');
-                        }
+                        // Hide the message after 3 seconds
+                        setTimeout(() => {
+                            deleteMessage.style.display = 'none';
+                        }, 3000);
                     } else {
-                        alert('An error occurred while processing the request.');
+                        alert('Failed to delete the item. Please try again.');
                     }
-                };
-                xhr.send(formData);
-            }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete the item. Please try again.');
+                });
+            });
         });
-    });
     </script>
 </body>
 </html>

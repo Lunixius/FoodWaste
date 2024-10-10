@@ -14,7 +14,7 @@ $user_type = $_SESSION['user_type']; // Ensure 'user_type' is correctly set in s
 
 // Fetch requests related to the restaurant's inventory items
 $request_query = "
-    SELECT r.request_id, r.id, r.name, r.username, r.requested_quantity, r.status, r.request_date, r.approval_date 
+    SELECT r.request_id, r.id, r.name, r.ngo_name, r.requested_quantity, r.status, r.request_date, r.approval_date 
     FROM requests r
     JOIN inventory i ON r.id = i.id
     WHERE i.donor = ?
@@ -79,7 +79,7 @@ $conn->close();
                     <th>Request ID</th>
                     <th>Inventory ID</th>
                     <th>Item Name</th>
-                    <th>Username</th>
+                    <th>NGO Name</th> <!-- Changed from Username to NGO Name -->
                     <th>Requested Quantity</th>
                     <th>Status</th>
                     <th>Request Date</th>
@@ -96,7 +96,7 @@ $conn->close();
                             echo "<td>" . htmlspecialchars($row['request_id']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['id']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['username']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['ngo_name']) . "</td>"; // Updated to ngo_name
                             echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['status']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";

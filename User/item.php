@@ -53,10 +53,14 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <title>Available Inventory</title>
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Poppins', sans-serif;
+            background-color: #e9f5f5;
         }
         .navbar {
             background-color: #000;
@@ -65,22 +69,63 @@ $conn->close();
         .container {
             margin-top: 50px;
         }
+
+        /* Bolder table borders and refined styling */
         table {
+            border-collapse: separate;
+            border-spacing: 0;
             width: 100%;
             margin-top: 20px;
+            border-radius: 5px;
+            overflow: hidden;
+            background-color: #fff; /* White background for readability */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for the table */
         }
+
         table th, table td {
             text-align: center;
             vertical-align: middle;
+            padding: 10px; /* Adds spacing for comfort */
+            border: 2px solid #007bff; /* Bolder borders with a nice color */
+            font-size: 14px; /* Adjusts text size for readability */
         }
+
+        table th {
+            text-align: center;
+            vertical-align: middle;
+            font-weight: bold;
+            background-color: #343a40; /* Dark background color for contrast */
+            color: #ffffff; /* White text for visibility */
+            border: 2px solid #000; /* Bold borders */
+            padding: 10px;
+        }
+
+        table td {
+            text-align: center;
+            vertical-align: middle;
+            border: 2px solid #ddd; /* Light borders for cells */
+            padding: 10px;
+        }
+        /* Inventory image styling */
         .inventory-image {
             max-width: 100px;
             max-height: 100px;
             object-fit: cover;
-            border: 1px solid #ddd;
+            border: 2px solid #ddd;
             padding: 5px;
             border-radius: 5px;
+            transition: transform 0.3s ease-in-out; /* Adds hover effect */
         }
+
+        .inventory-image:hover {
+            transform: scale(1.1); /* Slight enlargement on hover */
+        }
+
+        /* Hover effect for table rows */
+        .inventory-row:hover {
+            background-color: #e2f0ff; /* Subtle highlight on hover */
+        }
+
         .filter-bar {
             margin-bottom: 20px;
             display: flex;
@@ -98,6 +143,16 @@ $conn->close();
 
         .btn-spacing {
             margin-right: 10px;
+        }
+
+        #inventory-table th {
+            text-align: center;
+            vertical-align: middle;
+            font-weight: bold;
+            background-color: #f8f9fa; /* Light background color for header */
+            color: #000000; /* Black text color */
+            border: 2px solid #ddd; /* Light border for header */
+            padding: 10px;
         }
 
         /* Full-screen modal image */
@@ -130,8 +185,6 @@ $conn->close();
 
         <!-- Filter and Search Bar -->
         <div class="filter-bar">
-            <input type="text" id="search" class="form-control search-box" placeholder="Search by name...">
-            <button id="search-btn" class="btn btn-primary" style="margin-top: 10px;">Search...</button>
     
             <select id="category-filter" class="form-select filter-box" style="width: 200px;">
                 <option value="">All Categories</option>
@@ -205,33 +258,6 @@ $conn->close();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Search Functionality
-        document.getElementById('search').addEventListener('input', function() {
-            var searchValue = this.value.toLowerCase();
-            var rows = document.querySelectorAll('.inventory-row');
-            rows.forEach(function(row) {
-                var name = row.cells[1].innerText.toLowerCase();
-                if (name.includes(searchValue)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-
-        // Search by name when "Search..." button is clicked
-        document.getElementById('search-btn').addEventListener('click', function() {
-            var searchValue = document.getElementById('search').value.toLowerCase();
-            var rows = document.querySelectorAll('.inventory-row');
-            rows.forEach(function(row) {
-                var name = row.cells[1].innerText.toLowerCase();
-                if (name.includes(searchValue)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
 
         // Category Filter Functionality
         document.getElementById('category-filter').addEventListener('change', function() {

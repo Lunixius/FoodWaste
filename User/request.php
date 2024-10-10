@@ -16,8 +16,9 @@ if (!isset($_SESSION['username'])) {
 }
 $ngo_username = $_SESSION['username']; // Ensure 'username' is correctly set in session for NGO
 
-// Initialize a flag to track if a request was made successfully
+// Initialize flags to track request status
 $request_success = false;
+$request_message = '';
 
 // Handle form submission for making a request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['requested_quantity'])) {
@@ -36,29 +37,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['re
         $restaurant_username = $item_row['donor']; // Donor is the restaurant
 
         // Insert request into the requests table using a prepared statement
-        $stmt = $conn->prepare("INSERT INTO requests (id, name, username, requested_quantity, status, request_date) VALUES (?, ?, ?, ?, 'pending', NOW())");
-        $stmt->bind_param("issi", $item_id, $item_name, $ngo_username, $requested_quantity);
+        $stmt = $conn->prepare("INSERT INTO requests (id, name, restaurant_name, ngo_name, requested_quantity, status, request_date) VALUES (?, ?, ?, ?, ?, 'pending', NOW())");
+        $stmt->bind_param("isssi", $item_id, $item_name, $restaurant_username, $ngo_username, $requested_quantity);
 
         if ($stmt->execute()) {
             $request_success = true; // Set flag to true if request is successful
+            $request_message = 'Request made successfully!';
             // Redirect to the same page to prevent form resubmission
             header("Location: request.php?success=1");
             exit();
         } else {
-            echo "Error making request: " . $stmt->error;
+            $request_message = "Error making request: " . $stmt->error;
         }
         $stmt->close();
     } else {
-        echo "Item not found.";
+        $request_message = "Item not found.";
     }
 }
 
 // Fetch requests to display along with restaurant (donor) information
 $request_result = $conn->query("
-    SELECT r.request_id, r.id, r.name, r.username AS ngo_username, r.requested_quantity, r.status, r.request_date, r.approval_date, i.donor AS restaurant_username 
+    SELECT r.request_id, r.id, r.name, r.restaurant_name, r.ngo_name, r.requested_quantity, r.status, r.request_date, r.approval_date, r.rejection_remark 
     FROM requests r
-    JOIN inventory i ON r.id = i.id
-    WHERE r.username = '$ngo_username'
+    WHERE r.ngo_name = '$ngo_username'
 ");
 
 // Close the database connection
@@ -103,10 +104,16 @@ $conn->close();
         }
         .alert-popup {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             min-width: 250px;
             z-index: 1050;
+            display: none; /* Hide by default */
+        }
+        .fade {
+            opacity: 0;
+            transition: opacity 1s ease;
         }
     </style>
 </head>
@@ -117,9 +124,9 @@ $conn->close();
     <div class="container">
         <h2>My Requests</h2>
 
-        <?php if (isset($_GET['success'])): ?>
-            <div class="alert alert-success alert-popup" role="alert">
-                Request made successfully!
+        <?php if ($request_success): ?>
+            <div class="alert alert-success alert-popup" role="alert" id="notification">
+                <?php echo $request_message; ?>
             </div>
         <?php endif; ?>
 
@@ -129,11 +136,12 @@ $conn->close();
                     <th>Request ID</th>
                     <th>Inventory ID</th>
                     <th>Item Name</th>
-                    <th>Restaurant Username</th>
+                    <th>Restaurant Name</th>
                     <th>Requested Quantity</th>
                     <th>Status</th>
                     <th>Request Date</th>
                     <th>Approval Date</th>
+                    <th>Remark</th> <!-- New Remark column -->
                     <th>Action</th> 
                 </tr>
             </thead>
@@ -144,14 +152,15 @@ $conn->close();
                         while ($row = $request_result->fetch_assoc()) {
                             echo "<tr>";
                             echo "<td>" . htmlspecialchars($row['request_id']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['id']) . "</td>"; // Using 'id' instead of 'inventory_id'
-                            echo "<td>" . htmlspecialchars($row['name']) . "</td>"; // 'name' should match the column in 'requests' table
-                            echo "<td>" . htmlspecialchars($row['restaurant_username']) . "</td>"; // Show restaurant's username
+                            echo "<td>" . htmlspecialchars($row['id']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['restaurant_name']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['status']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
                             echo "<td>" . ($row['approval_date'] ? htmlspecialchars($row['approval_date']) : 'N/A') . "</td>";
-
+                            echo "<td>" . ($row['rejection_remark'] ? htmlspecialchars($row['rejection_remark']) : 'N/A') . "</td>"; // Display rejection remark
+                            
                             // New Action column logic
                             echo "<td>";
                             if ($row['status'] === 'approved') {
@@ -167,11 +176,11 @@ $conn->close();
                         }
                     } else {
                         // Display message within a row if no requests found
-                        echo "<tr><td colspan='9' class='text-center'>No requests found.</td></tr>";
+                        echo "<tr><td colspan='10' class='text-center'>No requests found.</td></tr>";
                     }
                 } else {
                     // Display error within a row if query fails
-                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
+                    echo "<tr><td colspan='10' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
                 }
                 ?>
             </tbody>
@@ -180,13 +189,17 @@ $conn->close();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Automatically hide the success message after a few seconds
+        // Automatically show and hide the notification message
         document.addEventListener('DOMContentLoaded', function() {
-            var alertPopup = document.querySelector('.alert-popup');
+            var alertPopup = document.getElementById('notification');
             if (alertPopup) {
+                alertPopup.style.display = 'block'; // Show the notification
                 setTimeout(function() {
-                    alertPopup.classList.add('fade');
-                }, 3000);
+                    alertPopup.classList.add('fade'); // Add fade class
+                }, 3000); // Wait for 3 seconds before fading
+                setTimeout(function() {
+                    alertPopup.style.display = 'none'; // Hide after fade
+                }, 4000); // Total time before hide (3 seconds display + 1 second fade)
             }
         });
     </script>

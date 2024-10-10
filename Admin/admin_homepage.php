@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-color: #f0f8ff;
             margin: 0;
             padding: 0;
