@@ -26,7 +26,75 @@ $result = $stmt->get_result();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NGO Requests</title>
+    <!-- Poppins Font Import -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        h2 {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .container {
+            margin-top: 50px;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            margin-top: 20px;
+        }
+        thead {
+            background-color: #343a40;
+            color: #ffffff;
+        }
+        th, td {
+            padding: 15px;
+            text-align: center;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        .btn-info {
+            background-color: #3498db;
+            border-color: #3498db;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .btn-info:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        /* Style the View button */
+        .btn-info {
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 8px;
+        }
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            table {
+                font-size: 14px;
+            }
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
     <?php include 'navbar.php'; ?>

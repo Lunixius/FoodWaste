@@ -109,13 +109,13 @@ $conn->close();
                         <a class="nav-link" href="<?php echo ($user_type === 'NGO') ? 'request.php' : 'requested.php'; ?>">Requests</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="contacts.php">Contacts</a>
-                    </li>
-                    <li class="nav-item">
                         <!-- Dynamic label and link for Delivery/Pickup -->
                         <a class="nav-link" href="<?php echo ($user_type === 'NGO') ? 'pickup.php' : 'delivery.php'; ?>">
                             <?php echo ($user_type === 'NGO') ? 'Pickup' : 'Delivery'; ?>
                         </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="contacts.php">Contacts</a>
                     </li>
                 </ul>
             </div>

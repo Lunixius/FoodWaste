@@ -3,70 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Homepage</title>
+    <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f0f8ff;
+            background-color: #f7f9fc;
+            color: #333;
             margin: 0;
             padding: 0;
         }
 
         .container {
-            max-width: 90%;
-            margin: 20px auto;
+            max-width: 85%;
+            margin: 40px auto;
         }
 
         h1 {
             color: #333;
             text-align: center;
             margin-bottom: 40px;
+            font-weight: 600;
         }
 
         .cards {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             flex-wrap: wrap;
-            gap: 30px; /* Increased gap for better spacing */
+            gap: 40px;
             padding: 20px;
         }
 
         .card {
             background-color: #fff;
-            width: 280px; /* Slightly increased card width */
-            padding: 25px; /* Increased padding */
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
             text-align: center;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-10px);
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
         }
 
         .card h2 {
-            color: #4CAF50;
-            margin-bottom: 15px;
-            font-size: 20px;
+            color: #007bff;
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: 600;
         }
 
         .card a {
             text-decoration: none;
-            color: #FF9800;
-            font-size: 16px;
-            display: block;
-            margin-top: 10px;
-            transition: color 0.3s ease;
+            color: #ff5722;
+            font-size: 18px;
+            font-weight: 500;
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .card a:hover {
-            color: #E65100;
+            background-color: #0056b3;
+            color: #f1f1f1;
         }
+
+        .card a i {
+            margin-left: 8px;
+        }
+
+        .navbar {
+            background-color: #343a40;
+        }
+
+        .navbar-brand, .nav-link {
+            color: #fff !important;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: #ff5722 !important;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .cards {
+                gap: 20px;
+            }
+            
+            .card {
+                width: 90%;
+                margin: 0 auto;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -80,25 +124,26 @@
         <div class="cards">
             <div class="card">
                 <h2>Inventory</h2>
-                <a href="view_inventory.php">View Inventory</a>
+                <a href="view_inventory.php">View Inventory <i class="fas fa-box-open"></i></a>
             </div>
             <div class="card">
                 <h2>Requests</h2>
-                <a href="manage_requests.php">Manage Requests</a>
-            </div>
-            <div class="card">
-                <h2>Contact</h2>
-                <a href="manage_contacts.php">Manage Contacts</a>
+                <a href="manage_requests.php">Manage Requests <i class="fas fa-tasks"></i></a>
             </div>
             <div class="card">
                 <h2>Delivery</h2>
-                <a href="manage_delivery.php">Manage Delivery</a>
+                <a href="order.php">Manage Delivery <i class="fas fa-shipping-fast"></i></a>
             </div>
             <div class="card">
-                <h2>Reports</h2>
-                <a href="generate_reports.php">Generate Reports</a>
+                <h2>Contact</h2>
+                <a href="manage_contacts.php">View Contacts <i class="fas fa-address-book"></i></a>
+            </div>
+            <div class="card">
+                <h2>Report</h2>
+                <a href="report.php">Generate Report <i class="fas fa-chart-line"></i></a>
             </div>
         </div>
     </div>
+
 </body>
 </html>

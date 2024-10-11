@@ -14,7 +14,7 @@ if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
-$ngo_username = $_SESSION['username']; // Ensure 'username' is correctly set in session for NGO
+$ngo_username = $_SESSION['username'];
 
 // Initialize flags to track request status
 $request_success = false;
@@ -73,10 +73,13 @@ $conn->close();
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <title>My Requests</title>
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
         }
         .navbar {
             background-color: #000;
@@ -85,22 +88,57 @@ $conn->close();
         .container {
             margin-top: 50px;
         }
+        h2 {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 30px;
+        }
         table {
             width: 100%;
             margin-top: 20px;
             border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
         }
         table th, table td {
             text-align: center;
             vertical-align: middle;
-            padding: 8px;
+            padding: 16px;
             border: 1px solid #ddd;
         }
         th {
             background-color: #f2f2f2;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        td {
+            font-size: 14px;
+            color: #555;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
         tr:hover {
-            background-color: #f5f5f5;
+            background-color: #f1f1f1;
+        }
+        .badge {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .badge-pending {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .badge-approved {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .badge-rejected {
+            background-color: #dc3545;
+            color: #fff;
         }
         .alert-popup {
             position: fixed;
@@ -109,11 +147,18 @@ $conn->close();
             transform: translate(-50%, -50%);
             min-width: 250px;
             z-index: 1050;
-            display: none; /* Hide by default */
+            display: none;
         }
         .fade {
             opacity: 0;
             transition: opacity 1s ease;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -141,7 +186,7 @@ $conn->close();
                     <th>Status</th>
                     <th>Request Date</th>
                     <th>Approval Date</th>
-                    <th>Remark</th> <!-- New Remark column -->
+                    <th>Remark</th> <!-- Remark column -->
                     <th>Action</th> 
                 </tr>
             </thead>
@@ -156,19 +201,28 @@ $conn->close();
                             echo "<td>" . htmlspecialchars($row['name']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['restaurant_name']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['status']) . "</td>";
+                            
+                            // Status with color-coded badges
+                            if ($row['status'] === 'pending') {
+                                echo "<td><span class='badge badge-pending'>Pending</span></td>";
+                            } elseif ($row['status'] === 'approved') {
+                                echo "<td><span class='badge badge-approved'>Approved</span></td>";
+                            } else {
+                                echo "<td><span class='badge badge-rejected'>Rejected</span></td>";
+                            }
+
                             echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
                             echo "<td>" . ($row['approval_date'] ? htmlspecialchars($row['approval_date']) : 'N/A') . "</td>";
                             echo "<td>" . ($row['rejection_remark'] ? htmlspecialchars($row['rejection_remark']) : 'N/A') . "</td>"; // Display rejection remark
                             
-                            // New Action column logic
+                            // Action column logic with badges
                             echo "<td>";
                             if ($row['status'] === 'approved') {
                                 echo "<a href='pickup.php?request_id=" . $row['request_id'] . "' class='btn btn-primary'>View</a>";
                             } elseif ($row['status'] === 'rejected') {
-                                echo "<span class='text-danger'>Not approved</span>";
+                                echo "<span class='badge badge-rejected'>N/A</span>";
                             } else {
-                                echo "Waiting for approval";
+                                echo "<span class='badge badge-pending'>Waiting for approval</span>";
                             }
                             echo "</td>";
 
@@ -189,19 +243,14 @@ $conn->close();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Automatically show and hide the notification message
-        document.addEventListener('DOMContentLoaded', function() {
-            var alertPopup = document.getElementById('notification');
-            if (alertPopup) {
-                alertPopup.style.display = 'block'; // Show the notification
-                setTimeout(function() {
-                    alertPopup.classList.add('fade'); // Add fade class
-                }, 3000); // Wait for 3 seconds before fading
-                setTimeout(function() {
-                    alertPopup.style.display = 'none'; // Hide after fade
-                }, 4000); // Total time before hide (3 seconds display + 1 second fade)
-            }
-        });
+        // Automatically show and hide alert notification
+        const notification = document.getElementById('notification');
+        if (notification) {
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.classList.add('fade');
+            }, 3000); // Display for 3 seconds then fade out
+        }
     </script>
 </body>
 </html>

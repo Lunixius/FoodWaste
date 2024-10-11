@@ -12,13 +12,15 @@ if (isset($_GET['request_id'])) {
 
     // Updated query to join with inventory to fetch restaurant info
     $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, 
-                    i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
-                    r.requested_quantity, r.receive_time, r.address, r.latitude, r.longitude, 
-                    r.restaurant_confirmed, r.ngo_confirmed
-              FROM requests r
-              JOIN inventory i ON r.id = i.id
-              JOIN user u ON i.donor = u.username
-              WHERE r.request_id = ?";
+                i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
+                r.requested_quantity, r.receive_time, r.address, 
+                r.restaurant_confirmed, r.ngo_confirmed,
+                r.receive_method  -- Add this line
+          FROM requests r
+          JOIN inventory i ON r.id = i.id
+          JOIN user u ON i.donor = u.username
+          WHERE r.request_id = ?";
+
 
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $request_id);
@@ -29,17 +31,19 @@ if (isset($_GET['request_id'])) {
 
 // Handle form submission for confirmation and address update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Retrieve form data
     $receive_date = $_POST['receive_date'];
     $receive_time = $_POST['receive_time'];
     $address = $_POST['address'];
-    $latitude = $_POST['latitude'];
-    $longitude = $_POST['longitude'];
+    // Removed latitude and longitude
+    // $latitude = $_POST['latitude'];
+    // $longitude = $_POST['longitude'];
 
     // Combine date and time into a single variable
     $combined_datetime = "$receive_date $receive_time";
 
     // Update request with pickup info and confirmation status
-    $update_query = "UPDATE requests SET receive_time = ?, address = ?, latitude = ?, longitude = ?";
+    $update_query = "UPDATE requests SET receive_time = ?, address = ?";
 
     // Update confirmation based on the role
     if ($role === 'restaurant') {
@@ -50,11 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $update_query .= " WHERE request_id = ?";
     $update_stmt = $conn->prepare($update_query);
-    $update_stmt->bind_param("ssssi", $combined_datetime, $address, $latitude, $longitude, $request_id);
+    $update_stmt->bind_param("ssi", $combined_datetime, $address, $request_id);
     $update_stmt->execute();
 
-    // Refresh the page to reflect the updated status
-    header("Location: receive.php?request_id=$request_id"); 
+    // Redirect to confirm.php to view the order status
+    header("Location: confirm.php"); 
     exit;
 }
 
@@ -76,6 +80,7 @@ if (isset($_POST['cancel_confirmation'])) {
     exit;
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -126,19 +131,6 @@ if (isset($_POST['cancel_confirmation'])) {
             background-color: #0056b3;
             border-color: #0056b3;
         }
-        .status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-        }
-        .status.confirmed {
-            background-color: #d4edda; /* Light green */
-            color: #155724; /* Dark green */
-        }
-        .status.pending {
-            background-color: #fff3cd; /* Light orange */
-            color: #856404; /* Dark orange */
-        }
     </style>
 </head>
 <body>
@@ -162,118 +154,79 @@ if (isset($_POST['cancel_confirmation'])) {
 
         <!-- Form for pickup time and address -->
         <form method="POST">
-            <div class="mb-3">
-                <label for="receive_date" class="form-label">Preferred Pickup Date</label>
-                <input type="date" id="receive_date" name="receive_date" class="form-control" value="<?php echo isset($row['receive_time']) ? explode(' ', $row['receive_time'])[0] : ''; ?>" required>
-            </div>
+        <div class="mb-3">
+           <label for="receive_date" class="form-label">Preferred Date</label>
+            <input type="date" id="receive_date" name="receive_date" class="form-control" value="<?php echo isset($row['receive_time']) ? explode(' ', $row['receive_time'])[0] : ''; ?>" required>
+        </div>
 
-            <div class="mb-3">
-                <label for="receive_time" class="form-label">Preferred Pickup Time</label>
-                <input type="time" id="receive_time" name="receive_time" class="form-control" value="<?php echo isset($row['receive_time']) ? explode(' ', $row['receive_time'])[1] : ''; ?>" required>
-            </div>
+        <div class="mb-3">
+            <label for="receive_time" class="form-label">Preferred Time</label>
+            <input type="time" id="receive_time" name="receive_time" class="form-control" value="<?php echo isset($row['receive_time']) ? explode(' ', $row['receive_time'])[1] : ''; ?>" required>
+        </div>
 
-            <div class="mb-3">
-                <label for="receive_method" class="form-label">Receive Method</label>
-                <select id="receive_method" name="receive_method" class="form-select" required>
-                    <option value="" disabled>Select Receive Method</option>
-                    <option value="Pickup" <?php echo isset($row['address']) && !empty($row['address']) ? 'selected' : ''; ?>>Pickup</option>
-                    <option value="Delivery">Delivery</option>
-                </select>
-            </div>
+        <div class="mb-3">
+            <label for="receive_method" class="form-label">Receive Method</label>
+            <select id="receive_method" name="receive_method" class="form-select" required>
+                <option value="" disabled>Select Receive Method</option>
+                <option value="Delivery" <?php echo (isset($row['receive_method']) && $row['receive_method'] == 'Delivery') ? 'selected' : ''; ?>>Delivery</option>
+                <option value="Pickup" <?php echo (isset($row['receive_method']) && $row['receive_method'] == 'Pickup') ? 'selected' : ''; ?>>Pickup</option>
+            </select>
+        </div>
 
-            <div class="input-group mb-3">
-                <input id="address-input" type="text" class="form-control" name="address" placeholder="Enter your pickup address" value="<?php echo $row['address'] ?? ''; ?>">
-                <button id="search-address-btn" class="btn btn-outline-secondary" type="button">Search</button>
-            </div>
-            <div id="map"></div>
+        <div class="input-group mb-3">
+            <input id="address-input" type="text" class="form-control" name="address" placeholder="Enter your pickup address" value="<?php echo $row['address'] ?? ''; ?>" required>
+            <button id="search-address-btn" class="btn btn-outline-secondary" type="button">Search</button>
+        </div>
+        <div id="map"></div>
 
-            <input type="hidden" id="latitude" name="latitude" value="<?php echo $row['latitude'] ?? ''; ?>">
-            <input type="hidden" id="longitude" name="longitude" value="<?php echo $row['longitude'] ?? ''; ?>">
-
-            <!-- Two separate status bars -->
-            <div class="status <?php echo $row['restaurant_confirmed'] ? 'confirmed' : 'pending'; ?>">
-                <strong>Restaurant Status:</strong>
-                <?php if ($row['restaurant_confirmed']): ?>
-                    Confirmed.
-                <?php else: ?>
-                    Waiting for restaurant confirmation.
-                <?php endif; ?>
-            </div>
-
-            <div class="status <?php echo $row['ngo_confirmed'] ? 'confirmed' : 'pending'; ?>">
-                <strong>NGO Status:</strong>
-                <?php if ($row['ngo_confirmed']): ?>
-                    Confirmed.
-                <?php else: ?>
-                    Waiting for NGO confirmation.
-                <?php endif; ?>
-            </div>
-
-            <div class="mb-3">
+        <!-- Conditional button display -->
+        <div class="mb-3">
+            <?php if ($row['restaurant_confirmed'] == 1 || $row['ngo_confirmed'] == 1): ?>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="cancel_confirmation" value="1">
+                    <button type="submit" class="btn btn-secondary">Cancel Confirmation</button>
+                </form>
+            <?php else: ?>
                 <button type="submit" class="btn btn-primary">Confirm Pickup</button>
-            </div>
-        </form>
+            <?php endif; ?>
+    </div>
+    </form>
 
-        <!-- Optional cancellation button -->
-        <form method="POST">
-            <input type="hidden" name="cancel_confirmation" value="1">
-            <button type="submit" class="btn btn-danger">Cancel Confirmation</button>
-        </form>
     </div>
 
-    <!-- Google Maps JavaScript API -->
-    <script>
-        let map, marker;
-
-        function initMap() {
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: -34.397, lng: 150.644 },
-                zoom: 8,
-            });
-
-            const addressInput = document.getElementById("address-input");
-            const searchButton = document.getElementById("search-address-btn");
-
-            // Initialize autocomplete for the address input
-            const autocomplete = new google.maps.places.Autocomplete(addressInput);
-            autocomplete.bindTo("bounds", map);
-
-            // When the user selects an address from the dropdown, populate the address fields
-            autocomplete.addListener("place_changed", function () {
-                const place = autocomplete.getPlace();
-                if (!place.geometry) return;
-
-                if (place.geometry.viewport) {
-                    map.fitBounds(place.geometry.viewport);
-                } else {
-                    map.setCenter(place.geometry.location);
-                    map.setZoom(17);
-                }
-
-                // Set the latitude and longitude values
-                document.getElementById("latitude").value = place.geometry.location.lat();
-                document.getElementById("longitude").value = place.geometry.location.lng();
-
-                // Add a marker for the selected location
-                if (marker) marker.setMap(null);
-                marker = new google.maps.Marker({
-                    position: place.geometry.location,
-                    map: map,
-                    title: place.name,
-                });
-            });
-
-            // Handle search button click
-            searchButton.addEventListener("click", function () {
-                const address = addressInput.value;
-                if (address) {
-                    autocomplete.set("place", null);
-                    autocomplete.set("input", address);
-                }
-            });
-        }
-    </script>
+    <!-- Google Maps API -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDbwOcep_rhK8dH77TJlPR7VuOZyN3OY7A&libraries=places&callback=initMap" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function initMap() {
+        const map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 0, lng: 0},
+            zoom: 2
+        });
+
+        const input = document.getElementById('address-input');
+        const searchButton = document.getElementById('search-address-btn');
+
+        const autocomplete = new google.maps.places.Autocomplete(input);
+        autocomplete.bindTo('bounds', map);
+
+        searchButton.addEventListener('click', () => {
+            const address = input.value;
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({'address': address}, (results, status) => {
+                if (status === 'OK') {
+                    const location = results[0].geometry.location;
+                    map.setCenter(location);
+                    new google.maps.Marker({
+                        position: location,
+                        map: map
+                    });
+                } else {
+                    alert('Geocode was not successful for the following reason: ' + status);
+                }
+            });
+        });
+    }
+    </script>
+
 </body>
 </html>

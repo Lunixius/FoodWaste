@@ -36,10 +36,12 @@ $conn->close();
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <title>Requests for My Items</title>
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
         }
         .navbar {
             background-color: #000;
@@ -47,6 +49,15 @@ $conn->close();
         }
         .container {
             margin-top: 50px;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: #333;
         }
         table {
             width: 100%;
@@ -56,14 +67,50 @@ $conn->close();
         table th, table td {
             text-align: center;
             vertical-align: middle;
-            padding: 8px;
+            padding: 12px;
             border: 1px solid #ddd;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #f0f0f0;
+            font-weight: 500;
+            color: #555;
+        }
+        td {
+            background-color: #fafafa;
+            color: #444;
         }
         tr:hover {
             background-color: #f5f5f5;
+        }
+        .highlight-orange {
+            background-color: #ffa500;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .highlight-green {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .highlight-red {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .no-requests {
+            font-size: 1.1rem;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            table {
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -84,7 +131,7 @@ $conn->close();
                     <th>Status</th>
                     <th>Request Date</th>
                     <th>Approval Date</th>
-                    <th>Action</th> <!-- New Action column -->
+                    <th>Action</th> <!-- Action column -->
                 </tr>
             </thead>
             <tbody>
@@ -96,28 +143,39 @@ $conn->close();
                             echo "<td>" . htmlspecialchars($row['request_id']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['id']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['ngo_name']) . "</td>"; // Updated to ngo_name
+                            echo "<td>" . htmlspecialchars($row['ngo_name']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['status']) . "</td>";
+
+                            // Status column with highlighted boxes for different statuses
+                            if ($row['status'] === 'approved') {
+                                echo "<td><span class='highlight-green'>Approved</span></td>";
+                            } elseif ($row['status'] === 'pending') {
+                                echo "<td><span class='highlight-orange'>Pending</span></td>";
+                            } elseif ($row['status'] === 'rejected') {
+                                echo "<td><span class='highlight-red'>Rejected</span></td>";
+                            }
+
                             echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
                             echo "<td>" . ($row['approval_date'] ? htmlspecialchars($row['approval_date']) : 'N/A') . "</td>";
 
-                            // Action column logic
+                            // Action column with different behavior for each status
                             if ($row['status'] === 'approved') {
                                 echo "<td><a href='delivery.php?request_id=" . htmlspecialchars($row['request_id']) . "' class='btn btn-primary'>View</a></td>";
-                            } else {
-                                echo "<td>Waiting for approval</td>";
+                            } elseif ($row['status'] === 'pending') {
+                                echo "<td><span class='highlight-orange'>Waiting for approval</span></td>";
+                            } elseif ($row['status'] === 'rejected') {
+                                echo "<td><span class='highlight-red'>N/A</span></td>";
                             }
 
                             echo "</tr>";
                         }
                     } else {
                         // Display message within a row if no requests found
-                        echo "<tr><td colspan='9' class='text-center'>No requests found.</td></tr>";
+                        echo "<tr><td colspan='9' class='text-center no-requests'>No requests found.</td></tr>";
                     }
                 } else {
                     // Display error within a row if query fails
-                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests.</td></tr>";
+                    echo "<tr><td colspan='9' class='text-center no-requests'>Error fetching requests.</td></tr>";
                 }
                 ?>
             </tbody>

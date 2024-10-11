@@ -10,7 +10,6 @@ if ($conn->connect_error) {
 // Start the session to check for admin login
 session_start();
 
-
 // Fetch inventory items from the database
 $inventory_result = $conn->query("SELECT * FROM inventory");
 
@@ -26,29 +25,76 @@ $conn->close();
     <title>View Inventory</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
         }
+
         .container {
             margin-top: 50px;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-        }
-        table th, table td {
+
+        h2 {
             text-align: center;
-            vertical-align: middle;
-            padding: 8px;
-            border: 1px solid #ddd;
+            margin-bottom: 30px;
+            color: #4CAF50;
         }
-        th {
-            background-color: #f2f2f2;
-        }
-        tr:hover {
-            background-color: #f5f5f5;
+
+        table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse; /* Ensure borders are not doubled */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+table th, table td {
+    text-align: center;
+    padding: 12px;
+    border: 1px solid #ddd; /* Add a solid border */
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: 500;
+}
+
+tr {
+    transition: background-color 0.3s ease;
+}
+
+tr:hover {
+    background-color: #f5f5f5;
+}
+
+td {
+    background-color: #fff;
+    border-bottom: 1px solid #ddd;
+}
+
+td:last-child {
+    border-right: 0;
+}
+
+        /* Mobile responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            table th, table td {
+                padding: 10px;
+            }
         }
     </style>
 </head>

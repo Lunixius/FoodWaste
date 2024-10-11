@@ -41,72 +41,106 @@ $conn->close();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-    body {
-        font-family: 'Poppins', sans-serif;
-    }
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
 
-    /* Background color for NGO users */
-    .ngo-background {
-        background-color: #e9f5f5; /* Example color for NGO */
-    }
+        /* Background color for NGO users */
+        .ngo-background {
+            background-color: #e9f5f5;
+        }
 
-    /* Background color for Restaurant users */
-    .restaurant-background {
-        background-color: #f0e6ff; /* Example color for Restaurant */
-    }
+        /* Background color for Restaurant users */
+        .restaurant-background {
+            background-color: #f0e6ff;
+        }
 
-    .container {
-        max-width: 90%;
-        margin: 20px auto;
-    }
+        .container {
+            max-width: 85%;
+            margin: 30px auto;
+            text-align: center;
+        }
 
-    h1 {
-        color: #333;
-        text-align: center;
-        margin-bottom: 40px;
-    }
+        h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
 
-    .cards {
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 30px;
-        padding: 20px;
-    }
+        .cards {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 40px;
+            padding: 20px;
+        }
 
-    .card {
-        background-color: #fff;
-        width: 280px;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-        text-align: center;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
+        .card {
+            background-color: #fff;
+            width: 300px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 6px solid #4CAF50; /* Highlighting cards */
+        }
 
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-    }
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
 
-    .card h2 {
-        color: #4CAF50;
-        margin-bottom: 15px;
-        font-size: 20px;
-    }
+        .card h2 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            font-weight: 500;
+        }
 
-    .card a {
-        text-decoration: none;
-        color: #FF9800;
-        font-size: 16px;
-        display: block;
-        margin-top: 10px;
-        transition: color 0.3s ease;
-    }
+        .card a {
+            display: inline-block;
+            text-decoration: none;
+            background-color: #FF9800;
+            color: #fff;
+            font-size: 1rem;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
 
-    .card a:hover {
-        color: #E65100;
-    }
+        .card a:hover {
+            background-color: #E65100;
+        }
+
+        .card i {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #4CAF50; /* Icon color */
+        }
+
+        /* Customize button styles for better interaction */
+        .card a.btn {
+            font-size: 1rem;
+            padding: 10px 20px;
+            border-radius: 6px;
+        }
+
+        /* Additional styling for better responsiveness */
+        @media (max-width: 768px) {
+            .cards {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card {
+                width: 90%;
+            }
+        }
     </style>
 </head>
 <body class="<?php echo ($user_type === 'NGO') ? 'ngo-background' : 'restaurant-background'; ?>">
@@ -115,34 +149,52 @@ $conn->close();
 
     <!-- Main Content -->
     <div class="container">
-        <h1>Food Waste</h1>
+        <h1>Welcome, <?php echo ($user_type === 'NGO') ? 'NGO Partner' : 'Restaurant Partner'; ?></h1>
         
         <div class="cards">
+            <!-- Card for Inventory -->
             <div class="card">
+                <i class="fas fa-box"></i>
                 <h2>Inventory</h2>
                 <?php if ($user_type === 'NGO'): ?>
-                    <a href="item.php">Food details</a>
+                    <a href="item.php">Browse Available Items</a>
                 <?php else: ?>
-                    <a href="inventory.php">View Inventory</a>
+                    <a href="inventory.php">Manage Inventory</a>
                 <?php endif; ?>
             </div>
+            
+            <!-- Card for Requests -->
             <div class="card">
-                <h2>Contacts</h2>
-                <a href="contacts.php">Contact</a>
-            </div>
-            <div class="card">
-                <h2><?php echo ($user_type === 'NGO') ? 'Pickup' : 'Delivery'; ?></h2>
-                <a href="<?php echo ($user_type === 'NGO') ? 'pickup.php' : 'delivery.php'; ?>">
-                    <?php echo ($user_type === 'NGO') ? 'Pickup Details' : 'Delivery Details'; ?>
-                </a>
-            </div>
-            <div class="card">
+                <i class="fas fa-receipt"></i>
                 <h2>Requests</h2>
                 <?php if ($user_type === 'NGO'): ?>
                     <a href="request.php">View My Requests</a>
                 <?php else: ?>
                     <a href="requested.php">Manage Requests</a>
                 <?php endif; ?>
+            </div>
+            
+            <!-- Card for Pickup or Delivery -->
+            <div class="card">
+                <i class="fas fa-truck"></i>
+                <h2><?php echo ($user_type === 'NGO') ? 'Pickup' : 'Delivery'; ?></h2>
+                <a href="<?php echo ($user_type === 'NGO') ? 'pickup.php' : 'delivery.php'; ?>">
+                    <?php echo ($user_type === 'NGO') ? 'View Pickup Details' : 'Manage Deliveries'; ?>
+                </a>
+            </div>
+
+            <!-- Card for Contacts -->
+            <div class="card">
+                <i class="fas fa-shopping-cart"></i>
+                <h2>Orders</h2>
+                <a href="confirm.php">View Orders</a>
+            </div>
+            
+            <!-- Card for Contacts -->
+            <div class="card">
+                <i class="fas fa-address-book"></i>
+                <h2>Contacts</h2>
+                <a href="contacts.php">Contact Us</a>
             </div>
         </div>
     </div>

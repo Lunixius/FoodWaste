@@ -57,10 +57,11 @@ $conn->close();
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet"> <!-- Poppins font -->
     <title>Manage Requests</title>
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Poppins', sans-serif; /* Applied Poppins font */
         }
         .navbar {
             background-color: #000;
@@ -77,11 +78,20 @@ $conn->close();
         table th, table td {
             text-align: center;
             vertical-align: middle;
-            padding: 8px;
+            padding: 12px;
             border: 1px solid #ddd;
         }
         th {
             background-color: #f2f2f2;
+        }
+        tr.pending {
+            background-color: #fffbeb; /* Light orange for pending */
+        }
+        tr.approved {
+            background-color: #e6ffe6; /* Light green for approved */
+        }
+        tr.rejected {
+            background-color: #ffe6e6; /* Light red for rejected */
         }
         tr:hover {
             background-color: #f5f5f5;
@@ -93,11 +103,15 @@ $conn->close();
             z-index: 9999;
         }
         input[type="text"] {
-            width: 200px; /* Adjusted width for the rejection reason input */
+            width: 200px;
+            margin-right: 10px; /* Spacing between input field and buttons */
         }
         .action-form {
             display: inline-block;
-            margin-right: 10px; /* Space between forms */
+            margin-right: 15px; /* Space between approve and reject form */
+        }
+        .btn-success {
+            margin-right: 10px; /* Space between approve button and rejection form */
         }
     </style>
 </head>
@@ -115,12 +129,11 @@ $conn->close();
                     <th>Inventory ID</th>
                     <th>Item Name</th>
                     <th>Restaurant Name</th>
-                    <th>NGO Name</th> <!-- Updated header -->
+                    <th>NGO Name</th>
                     <th>Requested Quantity</th>
                     <th>Status</th>
                     <th>Request Date</th>
                     <th>Action</th>
-                    <th>Remark</th>
                 </tr>
             </thead>
             <tbody>
@@ -128,12 +141,21 @@ $conn->close();
                 if ($request_result) {
                     if ($request_result->num_rows > 0) {
                         while ($row = $request_result->fetch_assoc()) {
-                            echo "<tr>";
+                            $row_class = "";
+                            if ($row['status'] === 'pending') {
+                                $row_class = "pending";
+                            } elseif ($row['status'] === 'approved') {
+                                $row_class = "approved";
+                            } elseif ($row['status'] === 'rejected') {
+                                $row_class = "rejected";
+                            }
+
+                            echo "<tr class='$row_class'>";
                             echo "<td>" . htmlspecialchars($row['request_id']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['id']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['restaurant_name']) . "</td>"; // Display restaurant name
-                            echo "<td>" . htmlspecialchars($row['ngo_name']) . "</td>"; // Updated to display NGO name
+                            echo "<td>" . htmlspecialchars($row['restaurant_name']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['ngo_name']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['status']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
@@ -159,33 +181,19 @@ $conn->close();
                                     </div>
                                 ";
                             } elseif ($row['status'] === 'approved') {
-                                echo "
-                                    <a href='method.php?request_id=" . htmlspecialchars($row['request_id']) . "' class='btn btn-primary'>View</a>
-                                ";
+                                echo "<a href='method.php?request_id=" . htmlspecialchars($row['request_id']) . "' class='btn btn-primary'>View</a>";
                             } elseif ($row['status'] === 'rejected') {
-                                echo "
-                                    <span>Rejected: " . htmlspecialchars($row['rejection_remark']) . "</span>
-                                ";
-                            }
-
-                            echo "</td>";
-                            echo "<td>";
-
-                            // Display remark if rejected
-                            if ($row['status'] === 'rejected') {
-                                echo htmlspecialchars($row['rejection_remark']);
-                            } else {
-                                echo "N/A"; // Show 'N/A' for pending and approved requests
+                                echo "<span>Rejected: " . htmlspecialchars($row['rejection_remark']) . "</span>";
                             }
 
                             echo "</td>";
                             echo "</tr>";
                         }
                     } else {
-                        echo "<tr><td colspan='10' class='text-center'>No requests found.</td></tr>";
+                        echo "<tr><td colspan='9' class='text-center'>No requests found.</td></tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='10' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
+                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
                 }
                 ?>
             </tbody>

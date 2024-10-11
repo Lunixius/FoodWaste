@@ -63,10 +63,13 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <title>Inventory Info</title>
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
         }
         .navbar {
             background-color: #000;
@@ -74,9 +77,50 @@ $conn->close();
         }
         .container {
             margin-top: 50px;
+            max-width: 800px;
         }
-        .form-group {
-            margin-bottom: 15px;
+        h2 {
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        .form-group label {
+            font-weight: 500;
+            color: #555;
+        }
+        .form-control {
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            font-size: 16px;
+            color: #555;
+        }
+        textarea.form-control {
+            resize: none;
+        }
+        .form-group img {
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        .btn-back {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .btn-back:hover {
+            background-color: #333;
+        }
+        .card {
+            padding: 25px;
+            border-radius: 15px;
+            background-color: #fff;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -86,55 +130,57 @@ $conn->close();
 
     <div class="container">
         <h2>Inventory Item Information</h2>
+        <div class="card">
+            <!-- Entity ID Display -->
+            <div class="form-group">
+                <label for="entity_id">Entity ID</label>
+                <input type="text" class="form-control" id="entity_id" value="<?php echo $inventory_id; ?>" readonly>
+            </div>
 
-        <!-- Entity ID Display -->
-        <div class="form-group">
-            <label for="entity_id">Entity ID</label>
-            <input type="text" class="form-control" id="entity_id" value="<?php echo $inventory_id; ?>" readonly>
-        </div>
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" class="form-control" id="name" value="<?php echo htmlspecialchars($inventory['name']); ?>" readonly>
+            </div>
 
-        <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" class="form-control" id="name" value="<?php echo htmlspecialchars($inventory['name']); ?>" readonly>
-        </div>
+            <div class="form-group">
+                <label for="category">Category</label>
+                <input type="text" class="form-control" id="category" value="<?php echo htmlspecialchars($inventory['category']); ?>" readonly>
+            </div>
 
-        <div class="form-group">
-            <label for="category">Category</label>
-            <input type="text" class="form-control" id="category" value="<?php echo htmlspecialchars($inventory['category']); ?>" readonly>
-        </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea class="form-control" id="description" rows="3" readonly><?php echo isset($inventory['description']) ? htmlspecialchars($inventory['description']) : 'No description available'; ?></textarea>
+            </div>
 
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea class="form-control" id="description" readonly><?php echo isset($inventory['description']) ? htmlspecialchars($inventory['description']) : 'No description available'; ?></textarea>
-        </div>
+            <div class="form-group">
+                <label for="picture">Picture</label>
+                <?php if (!empty($inventory['picture'])): ?>
+                    <img src="upload/<?php echo htmlspecialchars($inventory['picture']); ?>" alt="Image" width="200">
+                <?php else: ?>
+                    <p>No picture available</p>
+                <?php endif; ?>
+            </div>
 
-        <div class="form-group">
-            <label for="picture">Picture</label>
-            <?php if (!empty($inventory['picture'])): ?>
-                <img src="upload/<?php echo htmlspecialchars($inventory['picture']); ?>" alt="Image" width="200">
-            <?php else: ?>
-                No picture available
-            <?php endif; ?>
-        </div>
+            <div class="form-group">
+                <label for="donor">Donor</label>
+                <input type="text" class="form-control" id="donor" value="<?php echo htmlspecialchars($inventory['donor']); ?>" readonly>
+            </div>
 
-        <div class="form-group">
-            <label for="donor">Donor</label>
-            <input type="text" class="form-control" id="donor" value="<?php echo htmlspecialchars($inventory['donor']); ?>" readonly>
-        </div>
+            <div class="form-group">
+                <label for="date_created">Date Created</label>
+                <input type="text" class="form-control" id="date_created" value="<?php echo htmlspecialchars($inventory['date_created']); ?>" readonly>
+            </div>
 
-        <div class="form-group">
-            <label for="date_created">Date Created</label>
-            <input type="text" class="form-control" id="date_created" value="<?php echo htmlspecialchars($inventory['date_created']); ?>" readonly>
-        </div>
+            <div class="form-group">
+                <label for="last_modified">Last Modified</label>
+                <input type="text" class="form-control" id="last_modified" value="<?php echo htmlspecialchars($inventory['last_modified']); ?>" readonly>
+            </div>
 
-        <div class="form-group">
-            <label for="last_modified">Last Modified</label>
-            <input type="text" class="form-control" id="last_modified" value="<?php echo htmlspecialchars($inventory['last_modified']); ?>" readonly>
+            <!-- Back Button -->
+            <button class="btn-back" onclick="window.history.back()">Go Back</button>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
-

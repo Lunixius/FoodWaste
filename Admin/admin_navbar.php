@@ -35,13 +35,13 @@ if (isset($_POST['logout'])) {
                     <a class="nav-link" href="manage_requests.php">Requests</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="order.php">Delivery</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="manage_contacts.php">Contact</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="manage_delivery.php">Delivery</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="generate_reports.php">Reports</a>
+                    <a class="nav-link" href="report.php">Report</a>
                 </li>
                 <li class="nav-item">
                     <form method="POST" style="display:inline;">
