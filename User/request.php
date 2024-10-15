@@ -55,12 +55,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['re
     }
 }
 
+// Handle request cancellation directly in this file
+if (isset($_GET['cancel_request_id'])) {
+    $cancel_request_id = $_GET['cancel_request_id'];
+    
+    // Update the request's status to 'cancelled'
+    $stmt = $conn->prepare("UPDATE requests SET status = 'cancelled' WHERE request_id = ? AND ngo_name = ?");
+    $stmt->bind_param("is", $cancel_request_id, $ngo_username);
+    
+    if ($stmt->execute()) {
+        // Request successfully cancelled
+        $request_message = "Request successfully cancelled.";
+        header("Location: request.php?cancelled=1");
+        exit();
+    } else {
+        // Error cancelling the request
+        $request_message = "Error cancelling request: " . $stmt->error;
+    }
+    $stmt->close();
+}
+
 // Fetch requests to display along with restaurant (donor) information
-$request_result = $conn->query("
-    SELECT r.request_id, r.id, r.name, r.restaurant_name, r.ngo_name, r.requested_quantity, r.status, r.request_date, r.approval_date, r.rejection_remark 
-    FROM requests r
-    WHERE r.ngo_name = '$ngo_username'
-");
+$request_result = $conn->query("SELECT r.request_id, r.id, r.name, r.restaurant_name, r.ngo_name, r.requested_quantity, r.status, r.request_date, r.approval_date, r.rejection_remark FROM requests r WHERE r.ngo_name = '$ngo_username' AND r.status != 'cancelled'");
 
 // Close the database connection
 $conn->close();
@@ -175,6 +191,10 @@ $conn->close();
             </div>
         <?php endif; ?>
 
+        <?php if (isset($_GET['cancelled']) && $_GET['cancelled'] == 1): ?>
+            <div class="alert alert-success alert-popup" role="alert">Request cancelled successfully!</div>
+        <?php endif; ?>
+
         <table class="table table-bordered">
             <thead>
                 <tr>
@@ -186,7 +206,7 @@ $conn->close();
                     <th>Status</th>
                     <th>Request Date</th>
                     <th>Approval Date</th>
-                    <th>Remark</th> <!-- Remark column -->
+                    <th>Remark</th>
                     <th>Action</th> 
                 </tr>
             </thead>
@@ -212,44 +232,42 @@ $conn->close();
                             }
 
                             echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
-                            echo "<td>" . ($row['approval_date'] ? htmlspecialchars($row['approval_date']) : 'N/A') . "</td>";
-                            echo "<td>" . ($row['rejection_remark'] ? htmlspecialchars($row['rejection_remark']) : 'N/A') . "</td>"; // Display rejection remark
-                            
-                            // Action column logic with badges
-                            echo "<td>";
-                            if ($row['status'] === 'approved') {
-                                echo "<a href='pickup.php?request_id=" . $row['request_id'] . "' class='btn btn-primary'>View</a>";
-                            } elseif ($row['status'] === 'rejected') {
-                                echo "<span class='badge badge-rejected'>N/A</span>";
+                            echo "<td>" . htmlspecialchars($row['approval_date']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['rejection_remark']) . "</td>";
+
+                            // Action buttons including the Cancel and View functionality
+                            if ($row['status'] === 'pending') {
+                                echo "<td>";
+                                echo "<a href='request.php?cancel_request_id=" . htmlspecialchars($row['request_id']) . "' class='btn btn-primary btn-sm'>Cancel</a>";
+                                echo "</td>";
+                            } elseif ($row['status'] === 'approved') {
+                                echo "<td>";
+                                echo "<a href='pickup.php?request_id=" . htmlspecialchars($row['request_id']) . "' class='btn btn-success btn-sm'>View</a>";
+                                echo "</td>";
                             } else {
-                                echo "<span class='badge badge-pending'>Waiting for approval</span>";
+                                echo "<td>—</td>";
                             }
-                            echo "</td>";
 
                             echo "</tr>";
                         }
                     } else {
-                        // Display message within a row if no requests found
-                        echo "<tr><td colspan='10' class='text-center'>No requests found.</td></tr>";
+                        echo "<tr><td colspan='10'>No requests found.</td></tr>";
                     }
-                } else {
-                    // Display error within a row if query fails
-                    echo "<tr><td colspan='10' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
                 }
                 ?>
             </tbody>
         </table>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Automatically show and hide alert notification
-        const notification = document.getElementById('notification');
-        if (notification) {
-            notification.style.display = 'block';
-            setTimeout(() => {
-                notification.classList.add('fade');
-            }, 3000); // Display for 3 seconds then fade out
+        // Handle fade out of alert popup messages after 3 seconds
+        window.onload = function() {
+            var notification = document.getElementById('notification');
+            if (notification) {
+                setTimeout(function() {
+                    notification.classList.add('fade');
+                }, 3000);
+            }
         }
     </script>
 </body>

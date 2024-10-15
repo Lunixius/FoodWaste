@@ -10,17 +10,15 @@ $role = $_SESSION['role'] ?? null; // Get user role from session, set to null if
 if (isset($_GET['request_id'])) {
     $request_id = $_GET['request_id'];
 
-    // Updated query to join with inventory to fetch restaurant info
+    // Fetch all requests from the requests table
     $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, 
-                i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
-                r.requested_quantity, r.receive_time, r.address, 
-                r.restaurant_confirmed, r.ngo_confirmed,
-                r.receive_method  -- Add this line
-          FROM requests r
-          JOIN inventory i ON r.id = i.id
-          JOIN user u ON i.donor = u.username
-          WHERE r.request_id = ?";
-
+            i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
+            r.ngo_name, r.requested_quantity, r.receive_method, r.receive_time, 
+            r.address, r.delivery_completed
+        FROM requests r
+        JOIN inventory i ON r.id = i.id
+        JOIN user u ON i.donor = u.username
+        WHERE r.request_id = ?"; // Add the condition here
 
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $request_id);
@@ -29,37 +27,41 @@ if (isset($_GET['request_id'])) {
     $row = $result->fetch_assoc();
 }
 
+
 // Handle form submission for confirmation and address update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Retrieve form data
     $receive_date = $_POST['receive_date'];
     $receive_time = $_POST['receive_time'];
+    $receive_method = $_POST['receive_method'];
     $address = $_POST['address'];
-    // Removed latitude and longitude
-    // $latitude = $_POST['latitude'];
-    // $longitude = $_POST['longitude'];
 
     // Combine date and time into a single variable
     $combined_datetime = "$receive_date $receive_time";
 
-    // Update request with pickup info and confirmation status
-    $update_query = "UPDATE requests SET receive_time = ?, address = ?";
+    // Update request with pickup info, receive method, and confirmation status
+    $update_query = "UPDATE requests SET receive_time = ?, address = ?, receive_method = ?";
 
     // Update confirmation based on the role
     if ($role === 'restaurant') {
-        $update_query .= ", restaurant_confirmed = 1";
+        $update_query .= ", restaurant_confirmed = 1"; // Confirm restaurant
     } elseif ($role === 'ngo') {
-        $update_query .= ", ngo_confirmed = 1";
+        $update_query .= ", ngo_confirmed = 1"; // Confirm NGO
     }
 
     $update_query .= " WHERE request_id = ?";
     $update_stmt = $conn->prepare($update_query);
-    $update_stmt->bind_param("ssi", $combined_datetime, $address, $request_id);
+    $update_stmt->bind_param("sssi", $combined_datetime, $address, $receive_method, $request_id);
     $update_stmt->execute();
 
-    // Redirect to confirm.php to view the order status
-    header("Location: confirm.php"); 
-    exit;
+    if ($update_stmt->execute()) {
+        $success_message = "Pickup confirmed successfully!";
+    } else {
+        echo "Error: " . $update_stmt->error; // Display any error
+    }    
+
+    // Set a success message for user feedback
+    $success_message = "Pickup confirmed successfully!";
 }
 
 // Handle cancellation of confirmation
@@ -80,7 +82,6 @@ if (isset($_POST['cancel_confirmation'])) {
     exit;
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -138,6 +139,13 @@ if (isset($_POST['cancel_confirmation'])) {
     <div class="container">
         <h2 class="mb-4">Pickup Information</h2>
 
+        <!-- Display success message if set -->
+        <?php if (isset($success_message)): ?>
+            <div class="alert alert-success">
+                <?php echo $success_message; ?>
+            </div>
+        <?php endif; ?>
+
         <!-- Display request details -->
         <?php if (isset($row)): ?>
             <div class="mb-3">
@@ -147,6 +155,7 @@ if (isset($_POST['cancel_confirmation'])) {
                 <p>Requested Quantity: <?php echo $row['requested_quantity']; ?></p>
                 <p>Restaurant Name: <?php echo $row['restaurant_username']; ?></p>
                 <p>Restaurant Phone Number: <?php echo $row['restaurant_phone']; ?></p>
+                <p>Receive Method: <?php echo $row['receive_method']; ?></p>
             </div>
         <?php else: ?>
             <p>Request details not found!</p>
@@ -154,44 +163,41 @@ if (isset($_POST['cancel_confirmation'])) {
 
         <!-- Form for pickup time and address -->
         <form method="POST">
-        <div class="mb-3">
-           <label for="receive_date" class="form-label">Preferred Date</label>
-            <input type="date" id="receive_date" name="receive_date" class="form-control" value="<?php echo isset($row['receive_time']) ? explode(' ', $row['receive_time'])[0] : ''; ?>" required>
-        </div>
+            <div class="mb-3">
+                <label for="receive_date" class="form-label">Preferred Date</label>
+                <input type="date" id="receive_date" name="receive_date" class="form-control" value="<?php echo isset($row['receive_time']) ? explode(' ', $row['receive_time'])[0] : ''; ?>" required>
+            </div>
 
-        <div class="mb-3">
-            <label for="receive_time" class="form-label">Preferred Time</label>
-            <input type="time" id="receive_time" name="receive_time" class="form-control" value="<?php echo isset($row['receive_time']) ? explode(' ', $row['receive_time'])[1] : ''; ?>" required>
-        </div>
+            <div class="mb-3">
+                <label for="receive_time" class="form-label">Preferred Time</label>
+                <input type="time" id="receive_time" name="receive_time" class="form-control" value="<?php echo isset($row['receive_time']) ? explode(' ', $row['receive_time'])[1] : ''; ?>" required>
+            </div>
 
-        <div class="mb-3">
-            <label for="receive_method" class="form-label">Receive Method</label>
-            <select id="receive_method" name="receive_method" class="form-select" required>
-                <option value="" disabled>Select Receive Method</option>
-                <option value="Delivery" <?php echo (isset($row['receive_method']) && $row['receive_method'] == 'Delivery') ? 'selected' : ''; ?>>Delivery</option>
-                <option value="Pickup" <?php echo (isset($row['receive_method']) && $row['receive_method'] == 'Pickup') ? 'selected' : ''; ?>>Pickup</option>
-            </select>
-        </div>
+            <div class="mb-3">
+                <label for="receive_method" class="form-label">Receive Method</label>
+                <select id="receive_method" name="receive_method" class="form-select" required>
+                    <option value="" disabled>Select Receive Method</option>
+                    <option value="Delivery" <?php echo (isset($row['receive_method']) && $row['receive_method'] == 'Delivery') ? 'selected' : ''; ?>>Delivery</option>
+                    <option value="Pickup" <?php echo (isset($row['receive_method']) && $row['receive_method'] == 'Pickup') ? 'selected' : ''; ?>>Pickup</option>
+                </select>
+            </div>
 
-        <div class="input-group mb-3">
-            <input id="address-input" type="text" class="form-control" name="address" placeholder="Enter your pickup address" value="<?php echo $row['address'] ?? ''; ?>" required>
-            <button id="search-address-btn" class="btn btn-outline-secondary" type="button">Search</button>
-        </div>
-        <div id="map"></div>
+            <div class="input-group mb-3">
+                <input id="address-input" type="text" class="form-control" name="address" placeholder="Enter your pickup address" value="<?php echo $row['address'] ?? ''; ?>" required>
+                <button id="search-address-btn" class="btn btn-outline-secondary" type="button">Search</button>
+            </div>
+            <div id="map"></div>
 
-        <!-- Conditional button display -->
-        <div class="mb-3">
-            <?php if ($row['restaurant_confirmed'] == 1 || $row['ngo_confirmed'] == 1): ?>
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="cancel_confirmation" value="1">
-                    <button type="submit" class="btn btn-secondary">Cancel Confirmation</button>
-                </form>
-            <?php else: ?>
-                <button type="submit" class="btn btn-primary">Confirm Pickup</button>
-            <?php endif; ?>
-    </div>
-    </form>
+            <!-- Conditional button display -->
+<div class="mb-3">
+    <!-- Confirm button always shown, since we need to save the information -->
+    <button type="submit" class="btn btn-primary">Confirm</button>
 
+    <!-- New button to redirect to confirm.php for viewing orders -->
+    <a href="confirm.php" class="btn btn-info" style="margin-left: 10px;">View Orders</a>
+</div>
+
+        </form>
     </div>
 
     <!-- Google Maps API -->
@@ -227,6 +233,7 @@ if (isset($_POST['cancel_confirmation'])) {
         });
     }
     </script>
-
+    <!-- Include Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

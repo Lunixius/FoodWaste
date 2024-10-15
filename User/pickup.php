@@ -3,6 +3,11 @@
 $conn = new mysqli('localhost', 'root', '', 'foodwaste');
 session_start();
 
+// Check database connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
 // Fetch approved requests for NGO user
 $ngo_name = $_SESSION['username'];  // Assuming username is stored in session for logged-in NGO
 
@@ -75,12 +80,6 @@ $result = $stmt->get_result();
         .btn-info:hover {
             background-color: #2980b9;
             border-color: #2980b9;
-        }
-        /* Style the View button */
-        .btn-info {
-            padding: 8px 12px;
-            font-size: 14px;
-            border-radius: 8px;
         }
         /* Mobile Responsiveness */
         @media (max-width: 768px) {

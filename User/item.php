@@ -37,8 +37,8 @@ if ($user_type !== 'NGO') {
     exit();
 }
 
-// Fetch all inventory items with date_created and last_modified
-$inventory_query = $conn->prepare("SELECT id, name, category, expiry_date, quantity, picture, donor, date_created, last_modified FROM inventory");
+// Fetch all inventory items that are not expired
+$inventory_query = $conn->prepare("SELECT id, name, category, expiry_date, quantity, picture, donor, date_created, last_modified FROM inventory WHERE expiry_date >= CURDATE()");
 $inventory_query->execute();
 $inventory_result = $inventory_query->get_result();
 

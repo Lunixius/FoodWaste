@@ -10,8 +10,7 @@ if (isset($_GET['request_id'])) {
     // Query to fetch request details along with restaurant and NGO information
     $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, 
                     i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
-                    r.requested_quantity, r.receive_time, r.address, r.latitude, r.longitude, 
-                    r.restaurant_confirmed, r.ngo_confirmed, r.admin_confirmed
+                    r.requested_quantity, r.receive_time, r.address
               FROM requests r
               JOIN inventory i ON r.id = i.id
               JOIN user u ON i.donor = u.username
@@ -24,15 +23,9 @@ if (isset($_GET['request_id'])) {
     $row = $result->fetch_assoc();
 }
 
-// Handle admin confirmation of the request
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_request'])) {
-    // Confirm the request for the admin
-    $update_query = "UPDATE requests SET admin_confirmed = 1 WHERE request_id = ?";
-    $update_stmt = $conn->prepare($update_query);
-    $update_stmt->bind_param("i", $request_id);
-    $update_stmt->execute();
-
-    // Redirect to order.php for order details (this file will be created later)
+// Handle the redirection to view orders
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['view_orders'])) {
+    // Redirect to order.php for viewing order details
     header("Location: order.php?request_id=$request_id");
     exit;
 }
@@ -43,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_request'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Request Confirmation</title>
+    <title>Request Details</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -64,25 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_request'])) {
             font-weight: 500;
             margin-bottom: 5px;
         }
-        .status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-        }
-        .status.confirmed {
-            background-color: #d4edda; /* Light green */
-            color: #155724; /* Dark green */
-        }
-        .status.pending {
-            background-color: #fff3cd; /* Light orange */
-            color: #856404; /* Dark orange */
-        }
     </style>
 </head>
 <body>
     <?php include 'admin_navbar.php'; ?>
     <div class="container">
-        <h2 class="mb-4">Request Confirmation</h2>
+        <h2 class="mb-4">Request Details</h2>
 
         <!-- Display request details -->
         <?php if (isset($row)): ?>
@@ -97,33 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_request'])) {
                 <p>Pickup Address: <?php echo htmlspecialchars($row['address']); ?></p>
             </div>
 
-            <!-- Display status bars -->
-            <div class="status <?php echo $row['restaurant_confirmed'] ? 'confirmed' : 'pending'; ?>">
-                <strong>Restaurant Status:</strong>
-                <?php if ($row['restaurant_confirmed']): ?>
-                    Confirmed.
-                <?php else: ?>
-                    Waiting for restaurant confirmation.
-                <?php endif; ?>
-            </div>
+            <!-- View Orders button -->
+            <form method="POST">
+                <button type="submit" name="view_orders" class="btn btn-primary">View Orders</button>
+            </form>
 
-            <div class="status <?php echo $row['ngo_confirmed'] ? 'confirmed' : 'pending'; ?>">
-                <strong>NGO Status:</strong>
-                <?php if ($row['ngo_confirmed']): ?>
-                    Confirmed.
-                <?php else: ?>
-                    Waiting for NGO confirmation.
-                <?php endif; ?>
-            </div>
-
-            <!-- Confirmation button for admin -->
-            <?php if ($row['restaurant_confirmed'] && $row['ngo_confirmed'] && !$row['admin_confirmed']): ?>
-                <form method="POST">
-                    <button type="submit" name="confirm_request" class="btn btn-primary">Confirm Request</button>
-                </form>
-            <?php else: ?>
-                <p class="text-muted">The request cannot be confirmed until both the restaurant and NGO confirm their information.</p>
-            <?php endif; ?>
         <?php else: ?>
             <p>Request details not found!</p>
         <?php endif; ?>
