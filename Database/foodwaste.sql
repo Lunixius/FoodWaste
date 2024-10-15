@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 18, 2024 at 10:21 AM
+-- Generation Time: Oct 15, 2024 at 06:03 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -28,35 +28,18 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `admin` (
-  `id` int(6) UNSIGNED NOT NULL,
-  `username` varchar(30) NOT NULL,
-  `email` varchar(50) NOT NULL,
+  `id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
 --
--- Table structure for table `edit_history`
+-- Dumping data for table `admin`
 --
 
-CREATE TABLE `edit_history` (
-  `id` int(11) NOT NULL,
-  `inventory_id` int(11) NOT NULL,
-  `edit_time` datetime DEFAULT current_timestamp(),
-  `change_description` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `edit_history`
---
-
-INSERT INTO `edit_history` (`id`, `inventory_id`, `edit_time`, `change_description`) VALUES
-(1, 12, '2024-09-18 10:22:40', 'Edited inventory item details.'),
-(2, 12, '2024-09-18 10:42:10', 'Edited inventory item details.'),
-(3, 12, '2024-09-18 14:47:05', 'Edited inventory item details.'),
-(4, 12, '2024-09-18 14:50:47', 'Edited inventory item details.'),
-(5, 12, '2024-09-18 15:41:29', 'Edited inventory item details.');
+INSERT INTO `admin` (`id`, `username`, `email`, `password`) VALUES
+(2, 'admin', 'admin@gmail.com', '$2y$10$y.3TM4eKZPQioGeq.4Sj6O3efS/R3wGWXjJoXpvULzXwG2KuFXDjG');
 
 -- --------------------------------------------------------
 
@@ -82,7 +65,7 @@ CREATE TABLE `inventory` (
 --
 
 INSERT INTO `inventory` (`id`, `name`, `category`, `picture`, `donor`, `created_at`, `date_created`, `last_modified`, `expiry_date`, `quantity`) VALUES
-(12, 'Bread', 'Baked Goods', '', 'Lux Soon', '2024-09-18 01:50:09', '2024-09-18 01:50:09', '2024-09-18 06:59:29', '2024-09-18', 4);
+(19, '1', 'Fruits and Vegetables', '', 'res1', '2024-10-04 06:52:54', '2024-10-04 06:52:54', '2024-10-04 06:52:54', '2024-10-31', 3);
 
 -- --------------------------------------------------------
 
@@ -91,15 +74,28 @@ INSERT INTO `inventory` (`id`, `name`, `category`, `picture`, `donor`, `created_
 --
 
 CREATE TABLE `requests` (
+  `request_id` int(11) NOT NULL,
   `id` int(11) NOT NULL,
-  `inventory_id` int(11) DEFAULT NULL,
-  `ngo_id` int(11) DEFAULT NULL,
-  `requested_quantity` int(11) DEFAULT NULL,
-  `status` enum('Pending','Approved','Fulfilled') DEFAULT 'Pending',
-  `request_date` datetime DEFAULT current_timestamp(),
+  `name` varchar(255) NOT NULL,
+  `restaurant_name` varchar(255) DEFAULT NULL,
+  `ngo_name` varchar(255) NOT NULL,
+  `requested_quantity` int(11) NOT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'pending',
+  `request_date` datetime NOT NULL DEFAULT current_timestamp(),
   `approval_date` datetime DEFAULT NULL,
-  `fulfillment_date` datetime DEFAULT NULL
+  `receive_method` enum('delivery','pickup') DEFAULT NULL,
+  `receive_time` datetime DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `rejection_remark` varchar(255) DEFAULT NULL,
+  `delivery_completed` varchar(20) DEFAULT 'pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `requests`
+--
+
+INSERT INTO `requests` (`request_id`, `id`, `name`, `restaurant_name`, `ngo_name`, `requested_quantity`, `status`, `request_date`, `approval_date`, `receive_method`, `receive_time`, `address`, `rejection_remark`, `delivery_completed`) VALUES
+(44, 19, '1', 'res1', 'ngo1', 1, 'approved', '2024-10-15 21:41:55', '2024-10-15 21:42:03', 'delivery', '2024-10-18 12:11:00', '5th Avenue, New York, NY, USA', NULL, 'completed');
 
 -- --------------------------------------------------------
 
@@ -121,8 +117,10 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`id`, `username`, `email`, `phone_number`, `password`, `user_type`) VALUES
-(2, 'Lux Soon', 'soonyuenfong111@gmail.com', '601120826804', '$2y$10$Brtn9z4wVt3SbIYnbqIdUuPaXPzbk0yJHFX4TfVvGLTNql0PdGdIi', 'Restaurant'),
-(4, 'ngo', 'ngo@gmail.com', '0123456789', '$2y$10$Mobpmh5GOYN8QQUZzQhEhuzBBez/Cj5flbTlg6mc4Su6MhuAs/QrW', 'NGO');
+(6, 'res1', 'res1@gmail.com', '1.1', '$2y$10$49zFF13akGXLfvUUNIUOJ.vdfffPsoXd0fjizD/H6RempYMQSDHl6', 'Restaurant'),
+(7, 'res2', 'res2@gmail.com', '1.2', '$2y$10$FqsvHJxn3llxyc3kJC6YjeHKqMm4/QObHouheLsGw1FrpsH4yAQDy', 'Restaurant'),
+(8, 'ngo1', 'ngo1@gmail.com', '2.1', '$2y$10$KX21lKFEKGJUcsT4vm3yAO/uGdp5sUp2Rb360zCCdUF5d5CmrNfPW', 'NGO'),
+(9, 'ngo2', 'ngo2@gmail.com', '2.2', '$2y$10$88NzwZcXfynkZJRTG/.WIeu2HhIFjGbZyjIVatQmch5gbQMCc6f9S', 'NGO');
 
 --
 -- Indexes for dumped tables
@@ -135,13 +133,6 @@ ALTER TABLE `admin`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `edit_history`
---
-ALTER TABLE `edit_history`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `inventory_id` (`inventory_id`);
-
---
 -- Indexes for table `inventory`
 --
 ALTER TABLE `inventory`
@@ -152,9 +143,9 @@ ALTER TABLE `inventory`
 -- Indexes for table `requests`
 --
 ALTER TABLE `requests`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `inventory_id` (`inventory_id`),
-  ADD KEY `ngo_id` (`ngo_id`);
+  ADD PRIMARY KEY (`request_id`),
+  ADD KEY `id` (`id`),
+  ADD KEY `username` (`ngo_name`);
 
 --
 -- Indexes for table `user`
@@ -171,41 +162,29 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `admin`
 --
 ALTER TABLE `admin`
-  MODIFY `id` int(6) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `edit_history`
---
-ALTER TABLE `edit_history`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `inventory`
 --
 ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `requests`
 --
 ALTER TABLE `requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Constraints for dumped tables
 --
-
---
--- Constraints for table `edit_history`
---
-ALTER TABLE `edit_history`
-  ADD CONSTRAINT `edit_history_ibfk_1` FOREIGN KEY (`inventory_id`) REFERENCES `inventory` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `inventory`
@@ -217,8 +196,7 @@ ALTER TABLE `inventory`
 -- Constraints for table `requests`
 --
 ALTER TABLE `requests`
-  ADD CONSTRAINT `requests_ibfk_1` FOREIGN KEY (`inventory_id`) REFERENCES `inventory` (`id`),
-  ADD CONSTRAINT `requests_ibfk_2` FOREIGN KEY (`ngo_id`) REFERENCES `user` (`id`);
+  ADD CONSTRAINT `requests_ibfk_2` FOREIGN KEY (`ngo_name`) REFERENCES `user` (`username`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
