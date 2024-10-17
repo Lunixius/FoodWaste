@@ -231,14 +231,14 @@ $conn->close();
                         </td>
                         <td><?php echo htmlspecialchars($row['donor']); ?></td>
                         <td><?php echo htmlspecialchars($row['date_created']); ?></td>
-                        <td><?php echo htmlspecialchars($row['last_modified']); ?></td>
-                        
+                        <td><?php echo htmlspecialchars($row['last_modified']); ?></td> 
                         <td>
-                        <form id="requestForm-<?php echo $row['id']; ?>" action="request.php" method="POST">
-                            <input type="hidden" name="item_id" value="<?php echo $row['id']; ?>">
-                            <input type="number" name="requested_quantity" min="1" max="<?php echo $row['quantity']; ?>" placeholder="Enter quantity" required>
-                            <button type="button" class="btn btn-warning btn-sm btn-spacing" onclick="confirmRequest(<?php echo $row['id']; ?>)">Request</button>
-                        </form>
+                            <form id="requestForm-<?php echo $row['id']; ?>" action="request.php" method="POST">
+                                <input type="hidden" name="item_id" value="<?php echo $row['id']; ?>">
+                                <input type="hidden" name="category" value="<?php echo htmlspecialchars($row['category']); ?>"> <!-- Add category input -->
+                                <input type="number" name="requested_quantity" min="1" max="<?php echo $row['quantity']; ?>" placeholder="Enter quantity" required>
+                                <button type="button" class="btn btn-warning btn-sm btn-spacing" onclick="confirmRequest(<?php echo $row['id']; ?>)">Request</button>
+                            </form>
                         </td>
                     </tr>
                 <?php endwhile; ?>

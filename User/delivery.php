@@ -6,9 +6,9 @@ session_start();
 // Fetch approved requests for Restaurant user
 $restaurant_username = $_SESSION['username'];  // Assuming restaurant username is stored in session
 
-// Updated query to fetch NGO's information by joining with the requests and inventory tables
+// Updated query to fetch the category, NGO's information, and other necessary data by joining with the requests and inventory tables
 $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, 
-                 u.username AS ngo_name, u.phone_number AS ngo_phone, 
+                 i.category AS item_category, u.username AS ngo_name, u.phone_number AS ngo_phone, 
                  r.requested_quantity, r.status
           FROM requests r
           JOIN inventory i ON r.id = i.id 
@@ -95,6 +95,7 @@ $result = $stmt->get_result();
                     <th>Request ID</th>
                     <th>Inventory ID</th>
                     <th>Item Name</th>
+                    <th>Category</th> <!-- Category column added -->
                     <th>NGO Name</th>
                     <th>NGO Phone Number</th>
                     <th>Requested Quantity</th>
@@ -107,6 +108,7 @@ $result = $stmt->get_result();
                         <td><?= htmlspecialchars($row['request_id']) ?></td>
                         <td><?= htmlspecialchars($row['inventory_id']) ?></td>
                         <td><?= htmlspecialchars($row['item_name']) ?></td>
+                        <td><?= htmlspecialchars($row['item_category']) ?></td> <!-- Display the category -->
                         <td><?= htmlspecialchars($row['ngo_name']) ?></td>
                         <td><?= htmlspecialchars($row['ngo_phone']) ?></td>
                         <td><?= htmlspecialchars($row['requested_quantity']) ?></td>

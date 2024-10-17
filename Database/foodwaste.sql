@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 15, 2024 at 06:03 PM
+-- Generation Time: Oct 17, 2024 at 09:34 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -65,7 +65,7 @@ CREATE TABLE `inventory` (
 --
 
 INSERT INTO `inventory` (`id`, `name`, `category`, `picture`, `donor`, `created_at`, `date_created`, `last_modified`, `expiry_date`, `quantity`) VALUES
-(19, '1', 'Fruits and Vegetables', '', 'res1', '2024-10-04 06:52:54', '2024-10-04 06:52:54', '2024-10-04 06:52:54', '2024-10-31', 3);
+(21, 'Cola 1L', 'Beverages', 'Vought International Baseball logo.jpg', 'res1', '2024-10-17 17:21:57', '2024-10-17 17:21:57', '2024-10-17 17:21:57', '2024-10-19', 5);
 
 -- --------------------------------------------------------
 
@@ -77,6 +77,7 @@ CREATE TABLE `requests` (
   `request_id` int(11) NOT NULL,
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
+  `category` enum('Fruits and Vegetables','Dairy Products','Meat and Fish','Grains and Cereals','Baked Goods','Prepared Foods','Beverages','Condiments and Sauces') DEFAULT NULL,
   `restaurant_name` varchar(255) DEFAULT NULL,
   `ngo_name` varchar(255) NOT NULL,
   `requested_quantity` int(11) NOT NULL,
@@ -94,8 +95,8 @@ CREATE TABLE `requests` (
 -- Dumping data for table `requests`
 --
 
-INSERT INTO `requests` (`request_id`, `id`, `name`, `restaurant_name`, `ngo_name`, `requested_quantity`, `status`, `request_date`, `approval_date`, `receive_method`, `receive_time`, `address`, `rejection_remark`, `delivery_completed`) VALUES
-(44, 19, '1', 'res1', 'ngo1', 1, 'approved', '2024-10-15 21:41:55', '2024-10-15 21:42:03', 'delivery', '2024-10-18 12:11:00', '5th Avenue, New York, NY, USA', NULL, 'completed');
+INSERT INTO `requests` (`request_id`, `id`, `name`, `category`, `restaurant_name`, `ngo_name`, `requested_quantity`, `status`, `request_date`, `approval_date`, `receive_method`, `receive_time`, `address`, `rejection_remark`, `delivery_completed`) VALUES
+(55, 21, 'Cola 1L', 'Beverages', 'res1', 'ngo1', 1, 'approved', '2024-10-18 02:54:05', '2024-10-18 03:01:13', 'delivery', '2024-10-18 16:59:00', '1 Sierpnia 8, Warsaw, Poland', NULL, 'completed');
 
 -- --------------------------------------------------------
 
@@ -144,8 +145,8 @@ ALTER TABLE `inventory`
 --
 ALTER TABLE `requests`
   ADD PRIMARY KEY (`request_id`),
-  ADD KEY `id` (`id`),
-  ADD KEY `username` (`ngo_name`);
+  ADD KEY `username` (`ngo_name`),
+  ADD KEY `fk_inventory` (`id`);
 
 --
 -- Indexes for table `user`
@@ -168,13 +169,13 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT for table `inventory`
 --
 ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `requests`
 --
 ALTER TABLE `requests`
-  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT for table `user`
@@ -196,6 +197,7 @@ ALTER TABLE `inventory`
 -- Constraints for table `requests`
 --
 ALTER TABLE `requests`
+  ADD CONSTRAINT `fk_inventory` FOREIGN KEY (`id`) REFERENCES `inventory` (`id`),
   ADD CONSTRAINT `requests_ibfk_2` FOREIGN KEY (`ngo_name`) REFERENCES `user` (`username`);
 COMMIT;
 

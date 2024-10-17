@@ -13,9 +13,9 @@ if ($conn->connect_error) {
 
 session_start();
 
-// Fetch all requests with necessary data
+// Fetch all requests with necessary data, including the category
 $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, 
-                i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
+                i.category, i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
                 r.ngo_name, r.requested_quantity, r.receive_method, r.receive_time, r.address, 
                 r.delivery_completed
           FROM requests r
@@ -97,6 +97,7 @@ if (!$result) {
                 <th>Request ID</th>
                 <th>Inventory ID</th>
                 <th>Item Name</th>
+                <th>Category</th> <!-- New Category Column -->
                 <th>Restaurant Name</th>
                 <th>Phone Number</th>
                 <th>NGO Name</th>
@@ -113,6 +114,7 @@ if (!$result) {
                     <td><?php echo $row['request_id']; ?></td>
                     <td><?php echo $row['inventory_id']; ?></td>
                     <td><?php echo $row['item_name']; ?></td>
+                    <td><?php echo $row['category']; ?></td> <!-- Display Category -->
                     <td><?php echo $row['restaurant_username']; ?></td>
                     <td><?php echo $row['restaurant_phone']; ?></td>
                     <td><?php echo $row['ngo_name']; ?></td>

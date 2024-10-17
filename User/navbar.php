@@ -115,7 +115,7 @@ $conn->close();
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="confirm.php">Orders</a>
+                        <a class="nav-link" href="<?php echo ($user_type === 'NGO') ? 'confirmed.php' : 'confirm.php'; ?>">Orders</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="contacts.php">Contacts</a>

@@ -95,13 +95,6 @@ $conn->close();
             font-size: 16px;
             color: #555;
         }
-        textarea.form-control {
-            resize: none;
-        }
-        .form-group img {
-            border-radius: 10px;
-            margin-top: 15px;
-        }
         .btn-back {
             margin-top: 20px;
             padding: 10px 20px;
@@ -122,6 +115,32 @@ $conn->close();
             background-color: #fff;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+.image-container {
+    width: 100%;
+    max-width: 300px;
+    margin: 15px auto;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 15px;
+    text-align: center;
+    background-color: #f9f9f9;
+}
+
+.image-container img {
+    width: 100%;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.text-muted {
+    color: #888;
+    font-size: 14px;
+}
+
     </style>
 </head>
 <body>
@@ -148,17 +167,24 @@ $conn->close();
             </div>
 
             <div class="form-group">
-                <label for="description">Description</label>
-                <textarea class="form-control" id="description" rows="3" readonly><?php echo isset($inventory['description']) ? htmlspecialchars($inventory['description']) : 'No description available'; ?></textarea>
+                <label for="quantity">Quantity</label>
+                <input type="text" class="form-control" id="quantity" value="<?php echo htmlspecialchars($inventory['quantity']); ?>" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="expiry_date">Expiry Date</label>
+                <input type="text" class="form-control" id="expiry_date" value="<?php echo htmlspecialchars($inventory['expiry_date']); ?>" readonly>
             </div>
 
             <div class="form-group">
                 <label for="picture">Picture</label>
-                <?php if (!empty($inventory['picture'])): ?>
-                    <img src="upload/<?php echo htmlspecialchars($inventory['picture']); ?>" alt="Image" width="200">
-                <?php else: ?>
-                    <p>No picture available</p>
-                <?php endif; ?>
+                <div class="image-container">
+                    <?php if (!empty($inventory['picture'])): ?>
+                        <img src="upload/<?php echo htmlspecialchars($inventory['picture']); ?>" alt="Image" class="img-fluid">
+                    <?php else: ?>
+                        <p class="text-muted">No picture available</p>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <div class="form-group">

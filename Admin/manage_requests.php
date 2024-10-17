@@ -128,6 +128,7 @@ $conn->close();
                     <th>Request ID</th>
                     <th>Inventory ID</th>
                     <th>Item Name</th>
+                    <th>Category</th>
                     <th>Restaurant Name</th>
                     <th>NGO Name</th>
                     <th>Requested Quantity</th>
@@ -137,66 +138,67 @@ $conn->close();
                 </tr>
             </thead>
             <tbody>
-                <?php
-                if ($request_result) {
-                    if ($request_result->num_rows > 0) {
-                        while ($row = $request_result->fetch_assoc()) {
-                            $row_class = "";
-                            if ($row['status'] === 'pending') {
-                                $row_class = "pending";
-                            } elseif ($row['status'] === 'approved') {
-                                $row_class = "approved";
-                            } elseif ($row['status'] === 'rejected') {
-                                $row_class = "rejected";
-                            }
-
-                            echo "<tr class='$row_class'>";
-                            echo "<td>" . htmlspecialchars($row['request_id']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['id']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['restaurant_name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['ngo_name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['status']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
-                            echo "<td>";
-
-                            // Action column based on status
-                            if ($row['status'] === 'pending') {
-                                echo "
-                                    <div class='action-form'>
-                                        <form method='POST'>
-                                            <input type='hidden' name='request_id' value='" . htmlspecialchars($row['request_id']) . "' />
-                                            <input type='hidden' name='action' value='approve' />
-                                            <button type='submit' class='btn btn-success'>Approve</button>
-                                        </form>
-                                    </div>
-                                    <div class='action-form'>
-                                        <form method='POST'>
-                                            <input type='hidden' name='request_id' value='" . htmlspecialchars($row['request_id']) . "' />
-                                            <input type='hidden' name='action' value='reject' />
-                                            <input type='text' name='remark' placeholder='Reason for rejection' required />
-                                            <button type='submit' class='btn btn-danger'>Reject</button>
-                                        </form>
-                                    </div>
-                                ";
-                            } elseif ($row['status'] === 'approved') {
-                                echo "<a href='method.php?request_id=" . htmlspecialchars($row['request_id']) . "' class='btn btn-primary'>View</a>";
-                            } elseif ($row['status'] === 'rejected') {
-                                echo "<span>Rejected: " . htmlspecialchars($row['rejection_remark']) . "</span>";
-                            }
-
-                            echo "</td>";
-                            echo "</tr>";
-                        }
-                    } else {
-                        echo "<tr><td colspan='9' class='text-center'>No requests found.</td></tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='9' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
+    <?php
+    if ($request_result) {
+        if ($request_result->num_rows > 0) {
+            while ($row = $request_result->fetch_assoc()) {
+                $row_class = "";
+                if ($row['status'] === 'pending') {
+                    $row_class = "pending";
+                } elseif ($row['status'] === 'approved') {
+                    $row_class = "approved";
+                } elseif ($row['status'] === 'rejected') {
+                    $row_class = "rejected";
                 }
-                ?>
-            </tbody>
+
+                echo "<tr class='$row_class'>";
+                echo "<td>" . htmlspecialchars($row['request_id']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['id']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['category']) . "</td>"; // Display the category
+                echo "<td>" . htmlspecialchars($row['restaurant_name']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['ngo_name']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['status']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
+                echo "<td>";
+                
+                // Rest of the code for action buttons remains the same
+                if ($row['status'] === 'pending') {
+                    echo "
+                        <div class='action-form'>
+                            <form method='POST'>
+                                <input type='hidden' name='request_id' value='" . htmlspecialchars($row['request_id']) . "' />
+                                <input type='hidden' name='action' value='approve' />
+                                <button type='submit' class='btn btn-success'>Approve</button>
+                            </form>
+                        </div>
+                        <div class='action-form'>
+                            <form method='POST'>
+                                <input type='hidden' name='request_id' value='" . htmlspecialchars($row['request_id']) . "' />
+                                <input type='hidden' name='action' value='reject' />
+                                <input type='text' name='remark' placeholder='Reason for rejection' required />
+                                <button type='submit' class='btn btn-danger'>Reject</button>
+                            </form>
+                        </div>
+                    ";
+                } elseif ($row['status'] === 'approved') {
+                    echo "<a href='method.php?request_id=" . htmlspecialchars($row['request_id']) . "' class='btn btn-primary'>View</a>";
+                } elseif ($row['status'] === 'rejected') {
+                    echo "<span>Rejected: " . htmlspecialchars($row['rejection_remark']) . "</span>";
+                }
+
+                echo "</td>";
+                echo "</tr>";
+            }
+        } else {
+            echo "<tr><td colspan='9' class='text-center'>No requests found.</td></tr>";
+        }
+    } else {
+        echo "<tr><td colspan='9' class='text-center'>Error fetching requests: " . $conn->error . "</td></tr>";
+    }
+    ?>
+</tbody>
         </table>
     </div>
 

@@ -12,13 +12,14 @@ if (isset($_GET['request_id'])) {
 
     // Fetch all requests from the requests table
     $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, 
-            i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
-            r.ngo_name, r.requested_quantity, r.receive_method, r.receive_time, 
-            r.address, r.delivery_completed
-        FROM requests r
-        JOIN inventory i ON r.id = i.id
-        JOIN user u ON i.donor = u.username
-        WHERE r.request_id = ?"; // Add the condition here
+        i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
+        r.ngo_name, r.requested_quantity, r.receive_method, r.receive_time, 
+        r.address, r.delivery_completed, r.category
+    FROM requests r
+    JOIN inventory i ON r.id = i.id
+    JOIN user u ON i.donor = u.username
+    WHERE r.request_id = ?";
+
 
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $request_id);
@@ -152,6 +153,7 @@ if (isset($_POST['cancel_confirmation'])) {
                 <h5>Item: <?php echo $row['item_name']; ?></h5>
                 <p>Request ID: <?php echo $row['request_id']; ?></p>
                 <p>Inventory ID: <?php echo $row['inventory_id']; ?></p>
+                <p>Category: <?php echo $row['category']; ?></p> <!-- Add this line to show the category -->
                 <p>Requested Quantity: <?php echo $row['requested_quantity']; ?></p>
                 <p>Restaurant Name: <?php echo $row['restaurant_username']; ?></p>
                 <p>Restaurant Phone Number: <?php echo $row['restaurant_phone']; ?></p>
@@ -182,20 +184,23 @@ if (isset($_POST['cancel_confirmation'])) {
                 </select>
             </div>
 
+            <!-- Preferred Address Title -->
+            <h5>Preferred Address</h5> 
             <div class="input-group mb-3">
                 <input id="address-input" type="text" class="form-control" name="address" placeholder="Enter your pickup address" value="<?php echo $row['address'] ?? ''; ?>" required>
                 <button id="search-address-btn" class="btn btn-outline-secondary" type="button">Search</button>
             </div>
             <div id="map"></div>
 
-            <!-- Conditional button display -->
-<div class="mb-3">
-    <!-- Confirm button always shown, since we need to save the information -->
-    <button type="submit" class="btn btn-primary">Confirm</button>
 
-    <!-- New button to redirect to confirm.php for viewing orders -->
-    <a href="confirm.php" class="btn btn-info" style="margin-left: 10px;">View Orders</a>
-</div>
+            <!-- Conditional button display -->
+            <div class="mb-3">
+                <!-- Confirm button always shown, since we need to save the information -->
+                <button type="submit" class="btn btn-primary">Confirm</button>
+
+                <!-- New button to redirect to confirm.php for viewing orders -->
+                <a href="<?php echo ($user_type === 'NGO') ? 'confirmed.php' : 'confirm.php'; ?>" class="btn btn-info" style="margin-left: 10px;">View Orders</a>
+            </div>
 
         </form>
     </div>

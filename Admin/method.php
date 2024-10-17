@@ -9,7 +9,7 @@ if (isset($_GET['request_id'])) {
 
     // Query to fetch request details along with restaurant and NGO information
     $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, 
-                    i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
+                    i.category, i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
                     r.requested_quantity, r.receive_time, r.address
               FROM requests r
               JOIN inventory i ON r.id = i.id
@@ -70,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['view_orders'])) {
                 <h5>Item: <?php echo htmlspecialchars($row['item_name']); ?></h5>
                 <p>Request ID: <?php echo htmlspecialchars($row['request_id']); ?></p>
                 <p>Inventory ID: <?php echo htmlspecialchars($row['inventory_id']); ?></p>
+                <p>Category: <?php echo htmlspecialchars($row['category']); ?></p> <!-- Display category here -->
                 <p>Requested Quantity: <?php echo htmlspecialchars($row['requested_quantity']); ?></p>
                 <p>Restaurant Name: <?php echo htmlspecialchars($row['restaurant_username']); ?></p>
                 <p>Restaurant Phone Number: <?php echo htmlspecialchars($row['restaurant_phone']); ?></p>

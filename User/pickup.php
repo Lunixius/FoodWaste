@@ -11,9 +11,9 @@ if ($conn->connect_error) {
 // Fetch approved requests for NGO user
 $ngo_name = $_SESSION['username'];  // Assuming username is stored in session for logged-in NGO
 
-// Updated query to fetch restaurant's information by joining with the inventory table
+// Updated query to fetch restaurant's information, including category, by joining with the inventory table
 $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, 
-                 i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
+                 i.category, i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
                  r.requested_quantity, r.status
           FROM requests r
           JOIN inventory i ON r.id = i.id
@@ -105,6 +105,7 @@ $result = $stmt->get_result();
                     <th>Request ID</th>
                     <th>Inventory ID</th>
                     <th>Item Name</th>
+                    <th>Category</th>
                     <th>Restaurant Name</th>
                     <th>Phone Number</th>
                     <th>Requested Quantity</th>
@@ -118,6 +119,7 @@ $result = $stmt->get_result();
                             <td><?= htmlspecialchars($row['request_id']) ?></td>
                             <td><?= htmlspecialchars($row['inventory_id']) ?></td>
                             <td><?= htmlspecialchars($row['item_name']) ?></td>
+                            <td><?= htmlspecialchars($row['category']) ?></td>
                             <td><?= htmlspecialchars($row['restaurant_username']) ?></td>
                             <td><?= htmlspecialchars($row['restaurant_phone']) ?></td>
                             <td><?= htmlspecialchars($row['requested_quantity']) ?></td>
@@ -130,7 +132,7 @@ $result = $stmt->get_result();
                         </tr>
                     <?php endwhile; ?>
                 <?php else: ?>
-                    <tr><td colspan="7">No approved requests found.</td></tr>
+                    <tr><td colspan="8">No approved requests found.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>

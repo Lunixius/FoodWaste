@@ -183,11 +183,11 @@ $conn->close();
                 </a>
             </div>
 
-            <!-- Card for Contacts -->
+            <!-- Card for Orders-->
             <div class="card">
                 <i class="fas fa-shopping-cart"></i>
                 <h2>Orders</h2>
-                <a href="confirm.php">View Orders</a>
+                <a href="<?php echo ($user_type === 'NGO') ? 'confirmed.php' : 'confirm.php'; ?>">View Orders</a>
             </div>
             
             <!-- Card for Contacts -->

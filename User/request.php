@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['re
     $requested_quantity = $_POST['requested_quantity'];
 
     // Use prepared statement to avoid SQL injection
-    $stmt = $conn->prepare("SELECT name, donor FROM inventory WHERE id = ?");
+    $stmt = $conn->prepare("SELECT name, donor, category FROM inventory WHERE id = ?");
     $stmt->bind_param("i", $item_id);
     $stmt->execute();
     $item_query = $stmt->get_result();
@@ -35,10 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['re
         $item_row = $item_query->fetch_assoc();
         $item_name = $item_row['name'];
         $restaurant_username = $item_row['donor']; // Donor is the restaurant
+        $category = $item_row['category']; // Fetch the category
 
         // Insert request into the requests table using a prepared statement
-        $stmt = $conn->prepare("INSERT INTO requests (id, name, restaurant_name, ngo_name, requested_quantity, status, request_date) VALUES (?, ?, ?, ?, ?, 'pending', NOW())");
-        $stmt->bind_param("isssi", $item_id, $item_name, $restaurant_username, $ngo_username, $requested_quantity);
+        $stmt = $conn->prepare("INSERT INTO requests (id, name, restaurant_name, ngo_name, category, requested_quantity, status, request_date) VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())");
+        $stmt->bind_param("issssi", $item_id, $item_name, $restaurant_username, $ngo_username, $category, $requested_quantity);
 
         if ($stmt->execute()) {
             $request_success = true; // Set flag to true if request is successful
@@ -76,7 +77,12 @@ if (isset($_GET['cancel_request_id'])) {
 }
 
 // Fetch requests to display along with restaurant (donor) information
-$request_result = $conn->query("SELECT r.request_id, r.id, r.name, r.restaurant_name, r.ngo_name, r.requested_quantity, r.status, r.request_date, r.approval_date, r.rejection_remark FROM requests r WHERE r.ngo_name = '$ngo_username' AND r.status != 'cancelled'");
+$request_result = $conn->query("
+    SELECT r.request_id, r.id, r.name, r.restaurant_name, r.ngo_name, r.requested_quantity, r.status, r.request_date, r.approval_date, r.rejection_remark, i.category 
+    FROM requests r 
+    JOIN inventory i ON r.id = i.id 
+    WHERE r.ngo_name = '$ngo_username' AND r.status != 'cancelled'
+");
 
 // Close the database connection
 $conn->close();
@@ -201,6 +207,7 @@ $conn->close();
                     <th>Request ID</th>
                     <th>Inventory ID</th>
                     <th>Item Name</th>
+                    <th>Category</th>
                     <th>Restaurant Name</th>
                     <th>Requested Quantity</th>
                     <th>Status</th>
@@ -219,6 +226,7 @@ $conn->close();
                             echo "<td>" . htmlspecialchars($row['request_id']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['id']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['category']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['restaurant_name']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['requested_quantity']) . "</td>";
                             

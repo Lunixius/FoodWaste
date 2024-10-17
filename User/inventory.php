@@ -40,6 +40,20 @@ if ($user_type !== 'Restaurant') {
 // Handle delete request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $delete_id = $_POST['delete_id'];
+
+    // Check for associated requests
+    $check_requests_query = $conn->prepare("SELECT COUNT(*) FROM requests WHERE id = ?");
+    $check_requests_query->bind_param("i", $delete_id);
+    $check_requests_query->execute();
+    $check_requests_query->bind_result($request_count);
+    $check_requests_query->fetch();
+    $check_requests_query->close();
+
+    if ($request_count > 0) {
+        echo json_encode(['success' => false, 'message' => 'Cannot delete item. There are active requests associated with it.']);
+        exit();
+    }
+
     $delete_query = $conn->prepare("DELETE FROM inventory WHERE id = ? AND donor = ?");
     $delete_query->bind_param("is", $delete_id, $username);
     
@@ -60,8 +74,8 @@ $inventory_result = $inventory_query->get_result();
 
 // Close database connection
 $conn->close();
-
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -299,47 +313,34 @@ $conn->close();
         });
 
         // AJAX deletion handler
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function (e) {
-                e.preventDefault(); // Prevent the form from submitting normally
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function (e) {
+        e.preventDefault(); // Prevent the form from submitting normally
 
-                const deleteId = this.querySelector('input[name="delete_id"]').value;
+        const deleteId = this.querySelector('input[name="delete_id"]').value;
 
-                fetch('', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        'delete_id': deleteId,
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Remove the row from the table
-                        const row = this.closest('tr');
-                        row.remove();
+        fetch('', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(`delete_id=${deleteId}`)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Successfully deleted
+                alert('Item deleted successfully!');
+                location.reload(); // Reload the page to refresh the inventory list
+            } else {
+                // Show error message
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
 
-                        // Show success message
-                        const deleteMessage = document.getElementById('delete-message');
-                        deleteMessage.innerText = 'Item deleted successfully!';
-                        deleteMessage.style.display = 'block';
-
-                        // Hide the message after 3 seconds
-                        setTimeout(() => {
-                            deleteMessage.style.display = 'none';
-                        }, 3000);
-                    } else {
-                        alert('Failed to delete the item. Please try again.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to delete the item. Please try again.');
-                });
-            });
-        });
     </script>
 </body>
 </html>
