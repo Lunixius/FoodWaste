@@ -58,147 +58,139 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 $conn->close();
 ?>
 
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Lato', sans-serif;
-            background-image: url('your-background-image.jpg'); 
-            background-size: cover;
-            background-position: center;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7fc;
             margin: 0;
             padding: 0;
-            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 100vh;
             color: #333;
-            overflow: hidden; /* Prevents any overflow */
         }
 
-        .login-form {
-            width: 500px;  /* Adjusted width */
-            padding: 20px;  /* Reduced padding */
-            border-radius: 10px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-            background-color: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(8px);
-            border-top: 5px solid #4CAF50;
-            border-left: 5px solid #FF9800;
+        .login-container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
             position: relative;
         }
 
-        .login-form:before {
+        .login-container:before {
             content: '';
             position: absolute;
-            top: -50px;
-            right: -50px;
-            width: 150px;
-            height: 150px;
-            background: #FF9800;
+            width: 200px;
+            height: 200px;
+            background-color: rgba(76, 175, 80, 0.2);
             border-radius: 50%;
-            opacity: 0.2;
-        }
-
-        .login-form:after {
-            content: '';
-            position: absolute;
-            bottom: -50px;
+            top: -100px;
             left: -50px;
-            width: 150px;
-            height: 150px;
-            background: #4CAF50;
+            z-index: -1;
+        }
+
+        .login-container:after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background-color: rgba(255, 152, 0, 0.2);
             border-radius: 50%;
-            opacity: 0.2;
+            bottom: -100px;
+            right: -50px;
+            z-index: -1;
         }
 
-        .login-form h1 {
-            font-size: 24px;  /* Slightly reduced font size */
-            text-align: center;
-            margin-bottom: 20px;  /* Reduced margin */
-            color: #444;
-            font-weight: 700;
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            font-weight: 600;
         }
 
-        .login-form label {
-            font-size: 14px;  /* Slightly reduced font size */
+        label {
+            font-size: 14px;
+            text-align: left;
             display: block;
             margin-bottom: 5px;
-            color: #666;
             font-weight: 500;
+            color: #666;
         }
 
-        .login-form input,
-        .login-form select {
+        input,
+        select {
             width: 100%;
-            padding: 10px;  /* Reduced padding */
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
             border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-            margin-bottom: 10px;  /* Reduced margin */
+            font-size: 14px;
             background-color: #f7f7f7;
-            transition: all 0.3s ease;
+            transition: border-color 0.3s ease;
         }
 
-        .login-form input:focus,
-        .login-form select:focus {
-            background-color: #fff;
+        input:focus,
+        select:focus {
             border-color: #4CAF50;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
             outline: none;
+            background-color: #fff;
         }
 
         .error-message {
             color: red;
-            text-align: center;
-            margin-bottom: 10px;
             font-size: 14px;
+            margin-bottom: 15px;
             font-weight: 600;
         }
 
-        .login-form button {
+        button {
             background-color: #4CAF50;
-            color: white;
+            color: #fff;
             padding: 12px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            width: 100%;
             font-size: 16px;
             font-weight: 600;
             transition: background-color 0.3s ease, box-shadow 0.3s ease;
-            margin-top: 10px;  /* Reduced margin */
+            width: 100%;
         }
 
-        .login-form button:hover {
+        button:hover {
             background-color: #388E3C;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
-        .login-form p {
-            text-align: center;
-            margin-top: 10px;  /* Reduced margin */
-            color: #666;
+        .login-container p {
             font-size: 14px;
+            color: #666;
+            margin-top: 15px;
         }
 
-        .login-form p a {
+        .login-container p a {
             color: #FF9800;
             text-decoration: none;
             font-weight: 600;
-            transition: color 0.3s ease;
         }
 
-        .login-form p a:hover {
+        .login-container p a:hover {
             color: #E65100;
         }
     </style>
 </head>
 <body>
-    <div class="login-form">
+    <div class="login-container">
         <h1>User Login</h1>
         <?php if (!empty($error_message)): ?>
             <div class="error-message"><?php echo $error_message; ?></div>

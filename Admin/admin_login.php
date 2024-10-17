@@ -26,32 +26,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $query->execute();
     $result = $query->get_result();
 
-    // Debugging output
-    error_log("Query executed: " . $conn->error);
-
     if ($result->num_rows === 1) {
         $admin = $result->fetch_assoc();
-        
-        // Debugging output
-        error_log("Admin found: " . json_encode($admin));
 
         // Verify password
         if (password_verify($password, $admin['password'])) {
             $_SESSION['admin_id'] = $admin['id'];
-
-            // Debugging output
-            error_log("Password verified. Redirecting to homepage...");
 
             // Redirect to admin homepage
             header('Location: admin_homepage.php');
             exit();
         } else {
             $error = "Invalid username/email or password.";
-            error_log("Password verification failed.");
         }
     } else {
         $error = "No admin found with that username or email.";
-        error_log("No admin found.");
     }
     
     $query->close();
@@ -66,42 +55,51 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login</title>
+    <!-- Poppins Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
+            font-family: 'Poppins', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f0f8ff;
-            font-family: 'Lato', sans-serif;
+            background-color: #e9f5ff;
+            margin: 0;
         }
 
         .login-container {
             background-color: #fff;
             padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
             width: 400px;
+            max-width: 100%;
         }
 
-        .login-container h2 {
+        h2 {
             text-align: center;
             margin-bottom: 30px;
-            color: #333;
+            color: #343a40;
+            font-weight: 600;
         }
 
         .form-control {
-            border-radius: 5px;
+            border-radius: 8px;
             margin-bottom: 20px;
+            padding: 10px;
+            font-size: 16px;
         }
 
         .btn-primary {
             width: 100%;
             background-color: #007bff;
             border: none;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
         }
 
         .btn-primary:hover {
@@ -109,7 +107,7 @@ $conn->close();
         }
 
         .error {
-            color: red;
+            color: #ff4d4d;
             text-align: center;
             margin-top: 10px;
         }
@@ -117,10 +115,34 @@ $conn->close();
         .register-link {
             text-align: center;
             margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .register-link a {
+            color: #007bff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .register-link a:hover {
+            color: #0056b3;
+        }
+
+        /* Styling for Input Fields and Form */
+        input::placeholder {
+            color: #6c757d;
+            font-weight: 400;
+        }
+
+        /* Add subtle box shadow for hover and focus */
+        .form-control:focus {
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+            border-color: #007bff;
         }
     </style>
 </head>
 <body>
+
     <div class="login-container">
         <h2>Admin Login</h2>
         <form method="POST" action="">

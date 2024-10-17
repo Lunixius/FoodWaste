@@ -1,65 +1,11 @@
-<?php
-session_start();
-
-// Database connection parameters
-$servername = "localhost";
-$db_username = "root";  // Replace with your database username
-$db_password = "";  // Replace with your database password
-$dbname = "foodwaste";
-
-// Create connection
-$conn = new mysqli($servername, $db_username, $db_password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-$error_message = '';
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $conn->real_escape_string($_POST['username']);
-    $email = $conn->real_escape_string($_POST['email']);
-    $phone_number = $conn->real_escape_string($_POST['phone_number']);
-    $password = $conn->real_escape_string($_POST['password']);
-    $confirm_password = $conn->real_escape_string($_POST['confirm_password']);
-    $user_type = $conn->real_escape_string($_POST['user_type']);
-
-    // Check if passwords match
-    if ($password != $confirm_password) {
-        $error_message = "Passwords do not match.";
-    } else {
-        // Check if the email or username already exists
-        $check_sql = "SELECT * FROM user WHERE email = '$email' OR username = '$username'";
-        $check_result = $conn->query($check_sql);
-
-        if ($check_result->num_rows > 0) {
-            $error_message = "Username or email already taken.";
-        } else {
-            // Store the user details in the database
-            $insert_sql = "INSERT INTO user (username, email, phone_number, password, user_type) 
-                           VALUES ('$username', '$email', '$phone_number', '".password_hash($password, PASSWORD_DEFAULT)."', '$user_type')";
-            if ($conn->query($insert_sql) === TRUE) {
-                // Redirect to login page
-                header("Location: user_login.php");
-                exit();
-            } else {
-                $error_message = "Error: " . $conn->error;
-            }
-        }
-    }
-}
-
-$conn->close();
-?>
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>User Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Lato', sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-image: url('your-background-image.jpg');
             background-size: cover;
             background-position: center;
@@ -70,85 +16,71 @@ $conn->close();
             justify-content: center;
             align-items: center;
             color: #333;
-            overflow: hidden;
         }
 
-        /* Scrollable container */
+        /* Registration container */
         .register-container {
             width: 500px;
-            height: 80vh; /* Allow some space for scrolling */
-            padding: 20px;
-            overflow-y: auto;
+            max-height: 80vh; /* Limit height to 80% of the viewport */
+            padding: 30px;
             border-radius: 10px;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
             background-color: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(8px);
             border-top: 5px solid #4CAF50;
             border-left: 5px solid #FF9800;
             position: relative;
-            animation: zoom-out 0.5s ease-out;
+            overflow-y: auto; /* Enable vertical scrolling */
         }
 
-        /* Zoom-out animation */
-        @keyframes zoom-out {
-            0% {
-                transform: scale(1.05);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        /* Background design */
-        .register-container:before {
+        /* Background circles */
+        .register-container:before, .register-container:after {
             content: '';
             position: absolute;
+            border-radius: 50%;
+            opacity: 0.2;
+        }
+        .register-container:before {
             top: -50px;
             right: -50px;
             width: 150px;
             height: 150px;
             background: #FF9800;
-            border-radius: 50%;
-            opacity: 0.2;
         }
-
         .register-container:after {
-            content: '';
-            position: absolute;
             bottom: -50px;
             left: -50px;
             width: 150px;
             height: 150px;
             background: #4CAF50;
-            border-radius: 50%;
-            opacity: 0.2;
         }
 
+        /* Form styling */
         .register-container h1 {
             font-size: 24px;
             text-align: center;
             margin-bottom: 20px;
+            font-weight: 600;
             color: #444;
-            font-weight: 700;
         }
 
         .register-container label {
             font-size: 14px;
             display: block;
             margin-bottom: 5px;
-            color: #666;
             font-weight: 500;
+            color: #666;
         }
 
         .register-container input,
         .register-container select {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
             background-color: #f7f7f7;
+            margin-bottom: 15px;
+            font-size: 14px;
+            box-sizing: border-box;
             transition: all 0.3s ease;
         }
 
@@ -160,18 +92,19 @@ $conn->close();
             outline: none;
         }
 
+        /* Submit button */
         .register-container button {
             background-color: #4CAF50;
             color: white;
-            padding: 12px;
+            padding: 14px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
             font-size: 16px;
             font-weight: 600;
+            cursor: pointer;
             transition: background-color 0.3s ease, box-shadow 0.3s ease;
             margin-top: 10px;
+            width: 100%;
         }
 
         .register-container button:hover {
@@ -179,11 +112,12 @@ $conn->close();
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
+        /* Link styling */
         .register-container p {
             text-align: center;
-            margin-top: 10px;
-            color: #666;
             font-size: 14px;
+            color: #666;
+            margin-top: 15px;
         }
 
         .register-container p a {
@@ -196,7 +130,6 @@ $conn->close();
         .register-container p a:hover {
             color: #E65100;
         }
-
     </style>
 </head>
 <body>
