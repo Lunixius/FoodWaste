@@ -157,7 +157,6 @@ if (isset($_POST['cancel_confirmation'])) {
                 <p>Requested Quantity: <?php echo $row['requested_quantity']; ?></p>
                 <p>Restaurant Name: <?php echo $row['restaurant_username']; ?></p>
                 <p>Restaurant Phone Number: <?php echo $row['restaurant_phone']; ?></p>
-                <p>Receive Method: <?php echo $row['receive_method']; ?></p>
             </div>
         <?php else: ?>
             <p>Request details not found!</p>

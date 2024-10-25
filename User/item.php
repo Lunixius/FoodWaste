@@ -44,7 +44,6 @@ $inventory_result = $inventory_query->get_result();
 
 // Close the database connection
 $conn->close();
-
 ?>
 
 <!DOCTYPE html>

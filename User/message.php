@@ -21,6 +21,23 @@ $receiver_username = isset($_GET['username']) ? htmlspecialchars($_GET['username
 // Fetch the logged-in user's ID from the session
 $logged_in_user_id = $_SESSION['user_id'];
 
+// Fetch receiver ID based on username from URL
+$receiver_id = null; // Initialize to null in case the username does not exist
+
+$sql = "SELECT id FROM user WHERE username = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $receiver_username);
+$stmt->execute();
+$stmt->bind_result($receiver_id);
+$stmt->fetch();
+$stmt->close();
+
+// If no user with that username exists, display an error message
+if (!$receiver_id) {
+    die("Receiver username does not exist.");
+}
+
+
 // Check if a message is being sent
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $message = isset($_POST['message']) ? htmlspecialchars($_POST['message']) : '';
@@ -45,18 +62,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // Fetch messages between the logged-in user and the selected receiver
-$sql = "SELECT m.message_id, m.sender_id, m.receiver_id, m.message, m.timestamp, 
+$sql = "SELECT m.message_id, m.sender_id, m.receiver_id, m.message, m.timestamp,
         CASE 
             WHEN m.sender_id = ? THEN 'outgoing' 
             ELSE 'incoming' 
         END AS direction
         FROM messages m
-        JOIN user u ON (m.receiver_id = u.id AND u.username = ?) 
-        WHERE (m.sender_id = ? OR m.receiver_id = ?) 
+        WHERE (m.sender_id = ? AND m.receiver_id = ?) 
+           OR (m.sender_id = ? AND m.receiver_id = ?) 
         ORDER BY m.timestamp ASC";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("isii", $logged_in_user_id, $receiver_username, $logged_in_user_id, $logged_in_user_id);
+$stmt->bind_param("iiiii", $logged_in_user_id, $logged_in_user_id, $receiver_id, $receiver_id, $logged_in_user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -65,8 +82,6 @@ $messages = [];
 while ($row = $result->fetch_assoc()) {
     $messages[] = $row;
 }
-
-// Close the connection at the end
 $stmt->close();
 $conn->close();
 ?>

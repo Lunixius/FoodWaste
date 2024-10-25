@@ -136,7 +136,7 @@
             </div>
             <div class="card">
                 <h2>Contact</h2>
-                <a href="manage_contacts.php">View Contacts <i class="fas fa-address-book"></i></a>
+                <a href="admin_contacts.php">View Contacts <i class="fas fa-address-book"></i></a>
             </div>
             <div class="card">
                 <h2>Report</h2>

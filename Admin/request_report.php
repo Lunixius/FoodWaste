@@ -5,13 +5,14 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 // Include database connection
+require_once __DIR__ . '/libs/fpdf.php';
 $mysqli = new mysqli("localhost", "root", "", "foodwaste");
 if ($mysqli->connect_error) {
     die("Connection failed: " . $mysqli->connect_error);
 }
 
 // Initialize variables for chart data
-$totalRequests = $approvedRequests = $pendingRequests = $rejectedRequests = $fulfilledRequests = $requestedQuantity = $deliveredQuantity = 0;
+$totalRequests = $approvedRequests = $pendingRequests = $rejectedRequests = $fulfilledRequests = $requestedQuantity = $totalDeliveredQuantity = 0;
 $ngoData = $donorData = [];
 
 // Set default date range (last 30 days)
@@ -29,11 +30,9 @@ $requestQuery = "
     SELECT 
         COUNT(*) AS total_requests,
         SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved_requests,
-        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_requests,
         SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected_requests,
-        SUM(CASE WHEN delivery_completed = 1 THEN 1 ELSE 0 END) AS fulfilled_requests,
         SUM(requested_quantity) AS requested_quantity,
-        SUM(CASE WHEN delivery_completed = 1 THEN requested_quantity ELSE 0 END) AS delivered_quantity
+        SUM(CASE WHEN delivery_completed = 'completed' THEN requested_quantity ELSE 0 END) AS total_delivered_quantity
     FROM requests
     WHERE request_date BETWEEN '$startDate' AND '$endDate'";
 
@@ -42,11 +41,9 @@ if ($result) {
     $data = $result->fetch_assoc();
     $totalRequests = $data['total_requests'];
     $approvedRequests = $data['approved_requests'];
-    $pendingRequests = $data['pending_requests'];
     $rejectedRequests = $data['rejected_requests'];
-    $fulfilledRequests = $data['fulfilled_requests'];
     $requestedQuantity = $data['requested_quantity'];
-    $deliveredQuantity = $data['delivered_quantity'];
+    $totalDeliveredQuantity = $data['total_delivered_quantity'];
 }
 
 // Fetch NGO Data Breakdown
@@ -61,7 +58,7 @@ while ($row = $ngoResult->fetch_assoc()) {
     $ngoData[] = $row;
 }
 
-// Fetch Donor Data Breakdown (assuming 'restaurant_name' refers to donors)
+// Fetch Donor Data Breakdown
 $donorQuery = "
     SELECT restaurant_name, COUNT(request_id) AS fulfilled_requests 
     FROM requests 
@@ -70,6 +67,50 @@ $donorQuery = "
 $donorResult = $mysqli->query($donorQuery);
 while ($row = $donorResult->fetch_assoc()) {
     $donorData[] = $row;
+}
+
+// Handle PDF Download
+if (isset($_POST['download_pdf'])) {
+    $pdf = new FPDF();
+    $pdf->AddPage();
+    $pdf->SetFont('Arial', 'B', 16);
+
+    // Title
+    $pdf->Cell(0, 10, 'Food Waste Request Report', 0, 1, 'C');
+    $pdf->SetFont('Arial', '', 12);
+
+    // Date range display
+    $pdf->Ln(10);
+    $pdf->Cell(0, 10, 'Date Range: ' . htmlspecialchars($startDate) . ' to ' . htmlspecialchars($endDate), 0, 1, 'C');
+    $pdf->Ln(5);
+
+    // Report Summary
+    $pdf->Cell(50, 10, 'Total Requests:', 0, 0);
+    $pdf->Cell(50, 10, $totalRequests, 0, 1);
+    $pdf->Cell(50, 10, 'Approved Requests:', 0, 0);
+    $pdf->Cell(50, 10, $approvedRequests, 0, 1);
+    $pdf->Cell(50, 10, 'Rejected Requests:', 0, 0);
+    $pdf->Cell(50, 10, $rejectedRequests, 0, 1);
+    $pdf->Cell(50, 10, 'Total Requested Quantity:', 0, 0);
+    $pdf->Cell(50, 10, $requestedQuantity, 0, 1);
+    $pdf->Cell(50, 10, 'Delivered Quantity:', 0, 0);
+    $pdf->Cell(50, 10, $totalDeliveredQuantity, 0, 1);
+
+    // NGO Data Breakdown
+    $pdf->Ln(10);
+    $pdf->SetFont('Arial', 'B', 12);
+    $pdf->Cell(0, 10, 'NGO Request Breakdown', 0, 1);
+    $pdf->SetFont('Arial', '', 10);
+    foreach ($ngoData as $ngo) {
+        $pdf->Cell(50, 10, 'NGO Name: ' . $ngo['ngo_name'], 0, 1);
+        $pdf->Cell(50, 10, 'Total Requests: ' . $ngo['total_requests'], 0, 1);
+        $pdf->Cell(50, 10, 'Approved Requests: ' . $ngo['approved_requests'], 0, 1);
+        $pdf->Ln(5);
+    }
+
+    // Output the PDF
+    $pdf->Output('D', 'FoodWasteRequestReport.pdf');
+    exit;
 }
 ?>
 
@@ -89,7 +130,6 @@ while ($row = $donorResult->fetch_assoc()) {
             var requestStatusData = google.visualization.arrayToDataTable([
                 ['Status', 'Number of Requests'],
                 ['Approved', <?= $approvedRequests ?>],
-                ['Pending', <?= $pendingRequests ?>],
                 ['Rejected', <?= $rejectedRequests ?>],
                 ['Fulfilled', <?= $fulfilledRequests ?>]
             ]);
@@ -181,103 +221,36 @@ form label {
 }
 
 form input[type="date"] {
+    padding: 10px;
+    margin: 0 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    padding: 8px;
-    margin-right: 10px;
-    font-size: 14px;
 }
 
 form button {
+    padding: 10px 15px;
+    border: none;
     background-color: #4CAF50;
     color: white;
-    border: none;
     border-radius: 4px;
-    padding: 10px 15px;
     cursor: pointer;
     font-weight: 500;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
 }
 
 form button:hover {
     background-color: #45a049;
 }
 
-/* Summary Section */
-.summary {
-    background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    margin-bottom: 30px;
-}
-
-/* Container for the charts */
+/* Chart container */
 .chart-container {
     display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    margin-top: 30px;
-}
-
-.chart-box {
-    width: 45%;
-    margin-bottom: 30px;
-    background-color: #fff;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    padding: 20px;
-}
-
-#requestStatusChart, #ngoChart {
-    width: 100%;
-    height: 350px;
-}
-
-/* Table styling (optional for future use) */
-table {
-    width: 100%;
-    border-collapse: collapse;
+    justify-content: space-between;
     margin: 20px 0;
 }
 
-table th, table td {
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    text-align: left;
+.chart {
+    width: 48%;
 }
-
-table th {
-    background-color: #4CAF50;
-    color: white;
-    font-weight: 500;
-}
-
-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-table tr:hover {
-    background-color: #f1f1f1;
-}
-
-/* Button styles */
-button {
-    padding: 10px 15px;
-    background-color: #4CAF50;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
-}
-
-button:hover {
-    background-color: #45a049;
-}
-
     </style>
 </head>
 <body>
@@ -286,39 +259,35 @@ button:hover {
 
     <!-- Main container for the report -->
     <div class="container">
-        <h1>Request Report</h1>
+    <h1>Request Report</h1>
 
-        <!-- Date Range Filter -->
-        <form method="POST">
-            <label for="start_date">Start Date:</label>
-            <input type="date" id="start_date" name="start_date" value="<?= $startDate ?>">
-            <label for="end_date">End Date:</label>
-            <input type="date" id="end_date" name="end_date" value="<?= $endDate ?>">
-            <button type="submit" name="filter">Filter</button>
-        </form>
+    <!-- Date filter form -->
+    <form method="POST">
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" value="<?= htmlspecialchars($startDate) ?>" required>
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" value="<?= htmlspecialchars($endDate) ?>" required>
+        <button type="submit" name="filter">Filter</button>
+    </form>
 
-        <!-- Summary Section -->
-        <div class="summary">
-            <h2>Summary</h2>
-            <p>Total Requests: <?= $totalRequests ?></p>
-            <p>Approved Requests: <?= $approvedRequests ?></p>
-            <p>Pending Requests: <?= $pendingRequests ?></p>
-            <p>Rejected Requests: <?= $rejectedRequests ?></p>
-            <p>Fulfilled Requests: <?= $fulfilledRequests ?></p>
-            <p>Total Requested Quantity: <?= $requestedQuantity ?></p>
-            <p>Total Delivered Quantity: <?= $deliveredQuantity ?></p>
-        </div>
+    <!-- Display report summary -->
+    <h2>Summary</h2>
+    <p>Total Requests: <?= $totalRequests ?></p>
+    <p>Approved Requests: <?= $approvedRequests ?></p>
+    <p>Rejected Requests: <?= $rejectedRequests ?></p>
+    <p>Total Requested Quantity: <?= $requestedQuantity ?></p>
+    <p>Delivered Quantity: <?= $totalDeliveredQuantity ?></p>
 
-        <!-- Charts Section -->
+        <!-- Charts -->
         <div class="chart-container">
-            <div class="chart-box">
-                <div id="requestStatusChart"></div>
-            </div>
-            <div class="chart-box">
-                <div id="ngoChart"></div>
-            </div>
+            <div id="requestStatusChart" class="chart"></div>
+            <div id="ngoChart" class="chart"></div>
         </div>
+
+        <!-- PDF Download Button -->
+        <form method="POST">
+            <button type="submit" name="download_pdf">Download PDF Report</button>
+        </form>
     </div>
 </body>
-
 </html>

@@ -1,26 +1,20 @@
 <?php
-// Enable error reporting
+
+require_once __DIR__ . '/libs/fpdf.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Include database connection
 $conn = new mysqli('localhost', 'root', '', 'foodwaste');
-
-// Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Initialize variables for report
 $total_donations = 0;
 $total_delivered = 0;
-$total_wasted = 0;
 $remaining_inventory = 0;
 $category_data = [];
-$expiry_data = [];
-$request_status = ['approved' => 0, 'pending' => 0, 'rejected' => 0];
+$request_status = ['approved' => 0, 'rejected' => 0];
 
-// Handle date range filter
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 $date_filter = '';
@@ -29,46 +23,21 @@ if ($start_date && $end_date) {
     $date_filter = "WHERE date_created BETWEEN '$start_date' AND '$end_date'";
 }
 
-// Fetch total donations
-$query_total_donations = "SELECT SUM(quantity) AS total_donations FROM inventory $date_filter";
+$query_total_donations = "SELECT SUM(quantity) AS total_donations FROM inventory";
 $result_total_donations = $conn->query($query_total_donations);
 if ($result_total_donations && $row = $result_total_donations->fetch_assoc()) {
     $total_donations = $row['total_donations'];
 }
 
-// Fetch total delivered
 $query_total_delivered = "SELECT SUM(requested_quantity) AS total_delivered FROM requests WHERE status = 'approved'";
 $result_total_delivered = $conn->query($query_total_delivered);
 if ($result_total_delivered && $row = $result_total_delivered->fetch_assoc()) {
     $total_delivered = $row['total_delivered'];
 }
 
-// Fetch total wasted (expired items not requested)
-$query_total_wasted = "SELECT i.id, i.quantity, IFNULL(SUM(r.requested_quantity), 0) AS total_requested, 
-                       (i.quantity - IFNULL(SUM(r.requested_quantity), 0)) AS wasted_quantity 
-                       FROM inventory i 
-                       LEFT JOIN requests r ON i.id = r.id AND r.status = 'approved' 
-                       WHERE i.expiry_date < NOW() 
-                       GROUP BY i.id 
-                       HAVING wasted_quantity > 0";
+$remaining_inventory = $total_donations - $total_delivered;
 
-$result_total_wasted = $conn->query($query_total_wasted);
-$total_wasted = 0;
-if ($result_total_wasted) {
-    while ($row = $result_total_wasted->fetch_assoc()) {
-        $total_wasted += $row['wasted_quantity'];
-    }
-}
-
-// Fetch remaining inventory
-$query_remaining_inventory = "SELECT SUM(quantity) AS remaining_inventory FROM inventory $date_filter";
-$result_remaining_inventory = $conn->query($query_remaining_inventory);
-if ($result_remaining_inventory && $row = $result_remaining_inventory->fetch_assoc()) {
-    $remaining_inventory = $row['remaining_inventory'];
-}
-
-// Fetch request status
-$query_request_status = "SELECT status, COUNT(*) AS count FROM requests GROUP BY status";
+$query_request_status = "SELECT status, COUNT(*) AS count FROM requests WHERE status IN ('approved', 'rejected') GROUP BY status";
 $result_request_status = $conn->query($query_request_status);
 if ($result_request_status) {
     while ($row = $result_request_status->fetch_assoc()) {
@@ -76,13 +45,53 @@ if ($result_request_status) {
     }
 }
 
-// Fetch category breakdown
 $query_category_breakdown = "SELECT category, SUM(quantity) AS total_quantity FROM inventory GROUP BY category";
 $result_category_breakdown = $conn->query($query_category_breakdown);
 if ($result_category_breakdown) {
     while ($row = $result_category_breakdown->fetch_assoc()) {
         $category_data[] = $row;
     }
+}
+
+if (isset($_POST['download_pdf'])) {
+    $pdf = new FPDF();
+    $pdf->AddPage();
+    $pdf->SetFont('Arial', 'B', 16);
+    $pdf->Cell(0, 10, 'Food Waste Report', 0, 1, 'C');
+    $reportTitle = $start_date && $end_date ? "$start_date - $end_date" : "Food Waste Report";
+    $pdf->Cell(0, 10, $reportTitle, 0, 1, 'C');
+
+    $pdf->SetFont('Arial', '', 12);
+    $pdf->Ln(10);
+    $pdf->Cell(0, 10, 'Report Summary', 0, 1, 'L');
+    $pdf->SetFont('Arial', '', 10);
+
+    // Display date range
+    if ($start_date && $end_date) {
+        $pdf->Cell(0, 10, 'Date Range: ' . $start_date . ' to ' . $end_date, 0, 1, 'L');
+    }
+
+    $pdf->Cell(0, 10, 'Total Donations: ' . ($total_donations ? $total_donations : 0), 0, 1);
+    $pdf->Cell(0, 10, 'Total Delivered: ' . ($total_delivered ? $total_delivered : 0), 0, 1);
+    $pdf->Cell(0, 10, 'Remaining Inventory: ' . ($remaining_inventory ? $remaining_inventory : 0), 0, 1);
+
+    $pdf->Ln(10);
+    $pdf->SetFont('Arial', 'B', 12);
+    $pdf->Cell(0, 10, 'Request Status Breakdown', 0, 1);
+    $pdf->SetFont('Arial', '', 10);
+    $pdf->Cell(50, 10, 'Approved: ' . $request_status['approved'], 0, 1);
+    $pdf->Cell(50, 10, 'Rejected: ' . $request_status['rejected'], 0, 1);
+
+    $pdf->Ln(10);
+    $pdf->SetFont('Arial', 'B', 12);
+    $pdf->Cell(0, 10, 'Category Breakdown', 0, 1);
+    $pdf->SetFont('Arial', '', 10);
+    foreach ($category_data as $category) {
+        $pdf->Cell(50, 10, $category['category'] . ': ' . $category['total_quantity'], 0, 1);
+    }
+
+    $pdf->Output('D', 'FoodWasteReport.pdf');
+    exit;
 }
 
 ?>
@@ -110,7 +119,8 @@ if ($result_category_breakdown) {
         }
         .chart-container {
             position: relative;
-            height: 400px;
+            width: 100%; /* Full width */
+            height: 400px; /* Set a fixed height */
         }
         h2 {
             color: #007bff;
@@ -128,9 +138,6 @@ if ($result_category_breakdown) {
         .btn-primary {
             background-color: #007bff;
             border-color: #007bff;
-        }
-        .chart-container {
-            margin-top: 30px;
         }
     </style>
 </head>
@@ -163,14 +170,12 @@ if ($result_category_breakdown) {
         <div class="col-md-6">
             <h5>Total Donations: <?php echo $total_donations ? $total_donations : 0; ?></h5>
             <h5>Total Delivered: <?php echo $total_delivered ? $total_delivered : 0; ?></h5>
-            <h5>Total Wasted: <?php echo $total_wasted ? $total_wasted : 0; ?></h5>
             <h5>Remaining Inventory: <?php echo $remaining_inventory ? $remaining_inventory : 0; ?></h5>
         </div>
         <div class="col-md-6">
             <h5>Request Status:</h5>
             <ul>
                 <li>Approved: <?php echo $request_status['approved']; ?></li>
-                <li>Pending: <?php echo $request_status['pending']; ?></li>
                 <li>Rejected: <?php echo $request_status['rejected']; ?></li>
             </ul>
         </div>
@@ -185,6 +190,14 @@ if ($result_category_breakdown) {
     <div class="chart-container">
         <canvas id="statusBarChart"></canvas>
     </div>
+
+    <!-- Download PDF Button -->
+    <div class="text-center mt-4">
+        <form method="POST">
+            <button type="submit" name="download_pdf" class="btn btn-primary btn-lg">Download PDF</button>
+        </form>
+    </div>
+
 </div>
 
 <script>
@@ -192,39 +205,99 @@ if ($result_category_breakdown) {
 const categoryData = {
     labels: <?php echo json_encode(array_column($category_data, 'category')); ?>,
     datasets: [{
+        label: 'Inventory by Category',
         data: <?php echo json_encode(array_column($category_data, 'total_quantity')); ?>,
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
+        backgroundColor: ['#007bff', '#dc3545', '#ffc107', '#28a745', '#17a2b8', '#6f42c1', '#e83e8c', '#fd7e14'],
+        borderWidth: 1
     }]
 };
 
-// Data for Status Breakdown Bar Chart
+// Options for Pie Chart
+const categoryOptions = {
+    responsive: true,
+    maintainAspectRatio: false, // Allow the chart to resize
+    plugins: {
+        legend: {
+            position: 'top',
+        },
+        title: {
+            display: true,
+            text: 'Inventory by Category'
+        }
+    }
+};
+
+// Data for Request Status Bar Chart
 const statusData = {
-    labels: ['Approved', 'Pending', 'Rejected'],
+    labels: ['Approved', 'Rejected'],
     datasets: [{
-        label: 'Requests',
-        data: [
-            <?php echo $request_status['approved']; ?>,
-            <?php echo $request_status['pending']; ?>,
-            <?php echo $request_status['rejected']; ?>
-        ],
-        backgroundColor: ['#4BC0C0', '#FFCE56', '#FF6384'],
+        label: 'Requests Status',
+        data: [<?php echo $request_status['approved']; ?>, <?php echo $request_status['rejected']; ?>],
+        backgroundColor: ['#28a745', '#dc3545'],
+        borderWidth: 1
     }]
 };
 
-// Render Pie Chart
-const categoryPieChartCtx = document.getElementById('categoryPieChart').getContext('2d');
-new Chart(categoryPieChartCtx, {
-    type: 'pie',
-    data: categoryData
-});
+// Options for Bar Chart
+const statusOptions = {
+    responsive: true,
+    maintainAspectRatio: false, // Allow the chart to resize
+    plugins: {
+        legend: {
+            position: 'top',
+        },
+        title: {
+            display: true,
+            text: 'Request Status Breakdown'
+        }
+    }
+};
 
-// Render Bar Chart
-const statusBarChartCtx = document.getElementById('statusBarChart').getContext('2d');
-new Chart(statusBarChartCtx, {
-    type: 'bar',
-    data: statusData
-});
+// Create Pie Chart
+const categoryPieChart = new Chart(
+    document.getElementById('categoryPieChart'),
+    {
+        type: 'pie',
+        data: categoryData,
+        options: categoryOptions
+    }
+);
+
+// Create Bar Chart
+const statusBarChart = new Chart(
+    document.getElementById('statusBarChart'),
+    {
+        type: 'bar',
+        data: statusData,
+        options: statusOptions
+    }
+);
+
+// Function to capture the charts and send them to the server
+function captureCharts() {
+    const pieChartCanvas = document.getElementById('categoryPieChart');
+    const barChartCanvas = document.getElementById('statusBarChart');
+
+    // Convert charts to Data URL
+    const pieChartImage = pieChartCanvas.toDataURL('image/png');
+    const barChartImage = barChartCanvas.toDataURL('image/png');
+
+    // Set images in a hidden form to send to server
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.innerHTML = `
+        <input type="hidden" name="chart_images" value='${JSON.stringify([pieChartImage, barChartImage])}'>
+    `;
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Call the function when the PDF button is clicked
+document.querySelector('button[name="download_pdf"]').addEventListener('click', captureCharts);
+
 </script>
 
 </body>
 </html>
+
