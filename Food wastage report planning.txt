@@ -1,0 +1,41 @@
+Food wastage report planning 
+
+inventory table:
+id 	name 	category 	picture 	donor 	date_created 	last_modified 	expiry_date 	quantity 	
+
+requests table:
+request_id 	id 	name 	category 	restaurant_name 	ngo_name 	requested_quantity 	status 	request_date 	approval_date 	receive_method 	receive_method 	receive_time 	address 	rejection_remark 	delivery_completed
+
+View report requests
+inventory report in how much was wasted and how much was delivered donated out.
+Include formulas to calculate total requests, which category of food is in higher demand of request.
+
+1. Date/Time-Based Data
+
+    Date Created: When the food item was added to the inventory.
+    Last Modified Date: Tracks changes to the inventory, such as updates to quantity or expiry date.
+    Expiry Date: A critical field to track potential wastage (items approaching or past expiration).
+    Request Date: Date when a request was made by NGOs.
+    Approval/Rejection Date: Track when requests were approved or rejected.
+    Receive Time: Time when the NGO expects or schedules to receive the food.
+
+2. Food Category-Based Data
+
+    Category: Different categories like "Fruits and Vegetables," "Dairy Products," "Meat and Fish," etc., can help identify which types of food are wasted more frequently.
+    Quantity: The amount of food available and requested, which directly impacts food wastage.
+
+3. User-Specific Data
+
+    Donor (Restaurant): Identify which restaurant donated the food (potentially track wastage per donor).
+    NGO: Which NGO requested the food, and whether they collected it or rejected it.
+
+4. Request/Delivery Status Data
+
+    Requested Quantity vs Available Quantity: Helps analyze how much was requested vs how much was actually available.
+    Request Status: Whether the request was 'Pending,' 'Approved,' or 'Rejected.'
+    Delivery Completed: Tracks if the delivery of the requested food has been completed or not, which can indicate if any food remained undelivered and potentially wasted.
+    Rejection Remark: Explains why the request was rejected (e.g., poor food quality, excess availability, etc.), helping to track wastage reasons.
+    Receive Method: Indicates whether the food was collected by the NGO or delivered by the restaurant.
+
+Inventory and Requests, 2 types 
+Another column for remaining quantity.

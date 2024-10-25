@@ -194,7 +194,7 @@ $conn->close();
             <div class="card">
                 <i class="fas fa-address-book"></i>
                 <h2>Contacts</h2>
-                <a href="contacts.php">Contact Us</a>
+                <a href="contacts.php">View Contacts</a>
             </div>
         </div>
     </div>
