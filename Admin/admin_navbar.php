@@ -108,6 +108,9 @@ if (isset($_POST['logout'])) {
                     <a class="nav-link" href="admin_upload_report.php">Upload</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="manage_user_passwords.php">Passwords</a>
+                </li>
+                <li class="nav-item">
                     <form method="POST" style="display:inline;">
                         <button type="submit" name="logout" class="btn btn-link nav-link">Logout</button>
                     </form>

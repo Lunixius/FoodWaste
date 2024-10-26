@@ -59,14 +59,15 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Registration</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f0f8ff;
-            font-family: 'Lato', sans-serif;
+            background-color: #e9ecef;
+            font-family: 'Poppins', sans-serif;
         }
 
         .register-container {
@@ -80,12 +81,20 @@ $conn->close();
         .register-container h2 {
             text-align: center;
             margin-bottom: 30px;
-            color: #333;
+            color: #007bff;
+            font-weight: 600;
         }
 
         .form-control {
             border-radius: 5px;
             margin-bottom: 20px;
+            border: 1px solid #ced4da;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
 
         .btn-primary {
@@ -94,16 +103,19 @@ $conn->close();
             border: none;
             padding: 10px;
             border-radius: 5px;
+            transition: background-color 0.3s, transform 0.2s;
         }
 
         .btn-primary:hover {
             background-color: #0056b3;
+            transform: translateY(-2px);
         }
 
         .error {
             color: red;
             text-align: center;
             margin-top: 10px;
+            font-weight: 600;
         }
     </style>
 </head>

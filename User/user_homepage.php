@@ -17,16 +17,26 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Fetch user info
-$user_id = $_SESSION['user_id'];
-$user_query = $conn->prepare("SELECT user_type FROM user WHERE id = ?");
-$user_query->bind_param("i", $user_id);
-$user_query->execute();
-$user_result = $user_query->get_result();
-$user = $user_result->fetch_assoc();
-$user_type = $user['user_type'];
+// Initialize user type
+$user_type = null;
 
-$user_query->close();
+// Fetch user info if logged in
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+    $user_query = $conn->prepare("SELECT user_type FROM user WHERE id = ?");
+    $user_query->bind_param("i", $user_id);
+    $user_query->execute();
+    $user_result = $user_query->get_result();
+    $user = $user_result->fetch_assoc();
+    $user_type = $user['user_type'];
+    
+    $user_query->close();
+} else {
+    // Redirect to login if not logged in (optional)
+    header('Location: user_login.php');
+    exit();
+}
+
 $conn->close();
 ?>
 
