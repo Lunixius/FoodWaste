@@ -76,7 +76,7 @@ if (isset($_POST['download_pdf'])) {
     $pdf->SetFont('Arial', 'B', 16);
 
     // Title
-    $pdf->Cell(0, 10, 'Food Waste Request Report', 0, 1, 'C');
+    $pdf->Cell(0, 10, 'Food Waste Request Report - Request', 0, 1, 'C');
     $pdf->SetFont('Arial', '', 12);
 
     // Date range display

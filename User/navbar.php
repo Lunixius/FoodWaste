@@ -121,6 +121,9 @@ if (isset($_SESSION['username'])) {
                     <li class="nav-item">
                         <a class="nav-link" href="contacts.php">Contacts</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="user_report.php">Reports</a>
+                    </li>
                 </ul>
             </div>
 

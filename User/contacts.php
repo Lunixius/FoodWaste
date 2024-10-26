@@ -28,10 +28,6 @@ $user_type = $user['user_type'];
 
 $user_query->close();
 
-// Fetch Admin contacts
-$admin_query = "SELECT username, email FROM admin";
-$admin_result = $conn->query($admin_query);
-
 // Fetch Restaurant and NGO contacts based on user type
 if ($user_type === 'Restaurant') {
     $other_user_query = "SELECT username, email, phone_number FROM user WHERE user_type = 'NGO'";
@@ -97,30 +93,21 @@ $conn->close();
             color: #333;
         }
         .btn-message {
-    background-color: #007BFF; /* Complete blue for user buttons */
-    color: white;
-    border: none;
-    padding: 8px 16px; /* Added some padding for better sizing */
-    border-radius: 5px;
-    text-decoration: none;
-    transition: background-color 0.3s ease, transform 0.3s ease; /* Added transition for a smoother effect */
-    font-weight: 500; /* Ensure text weight is consistent */
-    display: inline-block; /* Ensure it behaves like a block element */
-}
+            background-color: #007BFF; /* Complete blue for user buttons */
+            color: white;
+            border: none;
+            padding: 8px 16px; /* Added some padding for better sizing */
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.3s ease; /* Added transition for a smoother effect */
+            font-weight: 500; /* Ensure text weight is consistent */
+            display: inline-block; /* Ensure it behaves like a block element */
+        }
 
-.btn-message:hover {
-    background-color: #0056b3; /* Darker blue on hover */
-    transform: translateY(-2px); /* Slight lift effect on hover */
-}
-
-.btn-message.admin {
-    background-color: #FF9800; /* Orange for admin button */
-}
-
-.btn-message.admin:hover {
-    background-color: #E65100; /* Darker orange on hover */
-}
-
+        .btn-message:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+            transform: translateY(-2px); /* Slight lift effect on hover */
+        }
     </style>
 </head>
 <body>
@@ -129,33 +116,6 @@ $conn->close();
 
     <div class="container">
         <h1>Contacts</h1>
-
-        <!-- Admin Contacts Table -->
-        <h3>Admin Contacts</h3>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($admin_result->num_rows > 0): ?>
-                    <?php while ($admin = $admin_result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($admin['username']); ?></td>
-                            <td><?php echo htmlspecialchars($admin['email']); ?></td>
-                            <td><a href="message.php?username=<?php echo urlencode($admin['username']); ?>" class="btn btn-message admin">Message</a></td>
-                        </tr>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="3">No Admin contacts found.</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
 
         <!-- Other User Contacts Table -->
         <h3><?php echo ($user_type === 'Restaurant') ? 'NGO Contacts' : 'Restaurant Contacts'; ?></h3>

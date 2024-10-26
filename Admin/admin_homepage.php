@@ -122,27 +122,32 @@
         <h1>Admin Dashboard</h1>
         
         <div class="cards">
-            <div class="card">
-                <h2>Inventory</h2>
-                <a href="view_inventory.php">View Inventory <i class="fas fa-box-open"></i></a>
-            </div>
-            <div class="card">
-                <h2>Requests</h2>
-                <a href="manage_requests.php">Manage Requests <i class="fas fa-tasks"></i></a>
-            </div>
-            <div class="card">
-                <h2>Delivery</h2>
-                <a href="order.php">Manage Delivery <i class="fas fa-shipping-fast"></i></a>
-            </div>
-            <div class="card">
-                <h2>Contact</h2>
-                <a href="admin_contacts.php">View Contacts <i class="fas fa-address-book"></i></a>
-            </div>
-            <div class="card">
-                <h2>Report</h2>
-                <a href="report.php">Generate Report <i class="fas fa-chart-line"></i></a>
-            </div>
-        </div>
+    <div class="card">
+        <h2>Inventory</h2>
+        <a href="view_inventory.php">View Inventory <i class="fas fa-box-open"></i></a>
+    </div>
+    <div class="card">
+        <h2>Requests</h2>
+        <a href="manage_requests.php">Manage Requests <i class="fas fa-tasks"></i></a>
+    </div>
+    <div class="card">
+        <h2>Delivery</h2>
+        <a href="order.php">Manage Delivery <i class="fas fa-shipping-fast"></i></a>
+    </div>
+    <div class="card">
+        <h2>Contact</h2>
+        <a href="admin_contacts.php">View Contacts <i class="fas fa-address-book"></i></a>
+    </div>
+    <div class="card">
+        <h2>Report</h2>
+        <a href="report.php">Generate Report <i class="fas fa-chart-line"></i></a>
+    </div>
+    <div class="card">
+        <h2>Upload Report</h2>
+        <a href="admin_upload_report.php">Upload Attachment <i class="fas fa-upload"></i></a>
+    </div>
+</div>
+
     </div>
 
 </body>

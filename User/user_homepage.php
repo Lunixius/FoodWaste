@@ -189,12 +189,19 @@ $conn->close();
                 <h2>Orders</h2>
                 <a href="<?php echo ($user_type === 'NGO') ? 'confirmed.php' : 'confirm.php'; ?>">View Orders</a>
             </div>
-            
+
             <!-- Card for Contacts -->
             <div class="card">
                 <i class="fas fa-address-book"></i>
                 <h2>Contacts</h2>
                 <a href="contacts.php">View Contacts</a>
+            </div>
+
+            <!-- New Card for Reports -->
+            <div class="card">
+                <i class="fas fa-file-alt"></i>
+                <h2>Reports</h2>
+                <a href="user_report.php">Download Reports</a>
             </div>
         </div>
     </div>
