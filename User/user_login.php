@@ -17,6 +17,31 @@ if ($conn->connect_error) {
 
 // Initialize error message
 $error_message = '';
+$password_change_status = '';
+$username_requesting_change = '';
+
+// Check if there is a password change request pending
+if (isset($_SESSION['username'])) {
+    $username = $_SESSION['username'];
+    $status_query = $conn->prepare("SELECT username, status FROM password_change_requests WHERE username = ? ORDER BY request_date DESC LIMIT 1");
+    $status_query->bind_param("s", $username);
+    $status_query->execute();
+    $status_result = $status_query->get_result();
+
+    if ($status_result->num_rows > 0) {
+        $row = $status_result->fetch_assoc();
+        $username_requesting_change = $row['username'];
+        $password_change_status = $row['status'];
+        
+        // If the status is "approved" or "denied," reset it after displaying
+        if (in_array($password_change_status, ['approved', 'denied'])) {
+            $reset_query = $conn->prepare("UPDATE password_change_requests SET status = 'initial' WHERE username = ?");
+            $reset_query->bind_param("s", $username_requesting_change);
+            $reset_query->execute();
+        }
+    }
+    $status_query->close();
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $input = $_POST['username_or_email'];
@@ -66,6 +91,7 @@ $conn->close();
     <title>User Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        /* Your existing CSS */
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f4f7fc;
@@ -76,6 +102,7 @@ $conn->close();
             align-items: center;
             height: 100vh;
             color: #333;
+            position: relative;
         }
 
         .login-container {
@@ -187,7 +214,57 @@ $conn->close();
         .login-container p a:hover {
             color: #E65100;
         }
+
+        /* New CSS for the password change status */
+        .status-container {
+            position: absolute;
+            top: 20px; /* Adjusted position to be visible */
+            right: 20px; /* Adjusted position to be visible */
+            background-color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            width: 200px;
+            text-align: center;
+            z-index: 10; /* Added to make sure it stays above other elements */
+        }
+
+        .status-pending {
+            color: #FFA500;
+        }
+
+        .status-approved {
+            color: #4CAF50;
+        }
+
+        .status-denied {
+            color: #F44336;
+        }
+
+        .refresh-button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+
+        .refresh-button:hover {
+            background-color: #388E3C;
+        }
+        
     </style>
+    <script>
+        function confirmRefresh() {
+            if (confirm("Are you sure you want to refresh the page?")) {
+                location.reload();
+            }
+        }
+    </script>
 </head>
 <body>
     <div class="login-container">
@@ -195,8 +272,18 @@ $conn->close();
         <?php if (!empty($error_message)): ?>
             <div class="error-message"><?php echo $error_message; ?></div>
         <?php endif; ?>
-        <form action="user_login.php" method="post">
-            <label for="username_or_email">Username/Email:</label>
+        
+        <!-- Display password change status if available -->
+        <?php if (!empty($password_change_status) && !empty($username_requesting_change)): ?>
+            <div class="status-container <?php echo 'status-' . strtolower($password_change_status); ?>">
+                <strong><?php echo htmlspecialchars($username_requesting_change); ?></strong><br>
+                Status: <span><?php echo ucfirst($password_change_status); ?></span>
+                <button class="refresh-button" onclick="confirmRefresh()">Refresh</button>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" action="">
+            <label for="username_or_email">Username or Email:</label>
             <input type="text" id="username_or_email" name="username_or_email" required>
 
             <label for="password">Password:</label>
@@ -204,14 +291,15 @@ $conn->close();
 
             <label for="user_type">User Type:</label>
             <select id="user_type" name="user_type" required>
-                <option value="Restaurant">Restaurant</option>
-                <option value="NGO">NGO</option>
+                <option value="restaurant">Restaurant</option>
+                <option value="ngo">NGO</option>
             </select>
 
             <button type="submit">Login</button>
-            <p><a href="user_register.php">Register</a></p>
-            <p><a href="user_forgot_password.php">Forgot Password?</a></p>
         </form>
+
+        <p>Don't have an account? <a href="user_register.php">Register here</a></p>
+        <p><a href="user_forgot_password.php">Forgot Password?</a></p>
     </div>
 </body>
 </html>
