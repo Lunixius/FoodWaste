@@ -97,6 +97,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f8f9fa;
+            position: relative; /* Added for positioning */
         }
         .container {
             margin-top: 50px;
@@ -142,6 +143,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .btn {
             margin-right: 10px;
         }
+        /* Back button positioning */
+        .back-button-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .back-button {
+            text-decoration: none;
+            color: #007bff; /* Change color as needed */
+            font-weight: 600;
+        }
         /* Input field design */
         input[readonly] {
             background-color: #e9ecef;
@@ -151,6 +163,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="container">
+    <a href="user_homepage.php" class="back-button"><i class="bi bi-arrow-right-circle"></i> Back to Homepage</a>
         <h2 class="mb-4">Profile Information</h2>
 
         <?php
