@@ -2,67 +2,107 @@
 session_start();
 
 // Database connection
-$servername = "localhost"; // Your database server
-$username = "root";        // Your database username
-$password = "";            // Your database password
-$dbname = "foodwaste";     // Your database name
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "foodwaste";
 
-// Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Get the username from the URL
+// Get the receiver username from the URL
 $receiver_username = isset($_GET['username']) ? htmlspecialchars($_GET['username']) : '';
 
-// Fetch the logged-in user's ID from the session
+// Fetch logged-in user's ID from the session
 $logged_in_user_id = $_SESSION['user_id'];
 
-// Fetch receiver ID based on username from URL
-$receiver_id = null; // Initialize to null in case the username does not exist
+// Function to fetch user ID based on username from both tables
+function getUserId($conn, $username) {
+    // Check in the user table
+    $sql = "SELECT id FROM user WHERE username = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $stmt->bind_result($user_id);
+    $stmt->fetch();
+    $stmt->close();
 
-$sql = "SELECT id FROM user WHERE username = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $receiver_username);
-$stmt->execute();
-$stmt->bind_result($receiver_id);
-$stmt->fetch();
-$stmt->close();
+    // If not found in user table, check admin table
+    if (!$user_id) {
+        $sql = "SELECT id FROM admin WHERE username = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $stmt->bind_result($user_id);
+        $stmt->fetch();
+        $stmt->close();
+    }
 
-// If no user with that username exists, display an error message
+    return $user_id;
+}
+
+// Fetch receiver ID based on username
+$receiver_id = getUserId($conn, $receiver_username);
+
 if (!$receiver_id) {
     die("Receiver username does not exist.");
 }
 
-
-// Check if a message is being sent
+// Handle message submission via AJAX
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $message = isset($_POST['message']) ? htmlspecialchars($_POST['message']) : '';
+    if (isset($_POST['message'])) {
+        $message = htmlspecialchars($_POST['message']);
+        $attachment_path = null;
 
-    // Get receiver ID from username
-    $sql = "SELECT id FROM user WHERE username = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $receiver_username);
-    $stmt->execute();
-    $stmt->bind_result($receiver_id);
-    $stmt->fetch();
-    $stmt->close();
-
-    // Insert message into database if receiver ID and message are valid
-    if ($receiver_id && $message) {
-        $sql = "INSERT INTO messages (sender_id, receiver_id, message, timestamp, is_read) VALUES (?, ?, ?, NOW(), 0)";
+        // Insert message into the database
+        $sql = "INSERT INTO messages (sender_id, receiver_id, message, timestamp, is_read, attachment) 
+                VALUES (?, ?, ?, NOW(), 0, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iis", $logged_in_user_id, $receiver_id, $message);
-        $stmt->execute();
+        $stmt->bind_param("iiss", $logged_in_user_id, $receiver_id, $message, $attachment_path);
+
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Failed to send message.']);
+        }
         $stmt->close();
+        exit;
+    }
+
+    // Handle file attachment upload
+    if (isset($_FILES['attachment'])) {
+        $fileTmpPath = $_FILES['attachment']['tmp_name'];
+        $fileName = $_FILES['attachment']['name'];
+        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        $uploadFileDir = 'uploads/';
+        $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
+        $attachment_path = $uploadFileDir . $newFileName;
+
+        if (move_uploaded_file($fileTmpPath, $attachment_path)) {
+            // Insert attachment as message with empty text
+            $sql = "INSERT INTO messages (sender_id, receiver_id, message, timestamp, is_read, attachment) 
+                    VALUES (?, ?, '', NOW(), 0, ?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("iis", $logged_in_user_id, $receiver_id, $attachment_path);
+
+            if ($stmt->execute()) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Failed to send attachment.']);
+            }
+            $stmt->close();
+        } else {
+            echo json_encode(['success' => false, 'error' => 'File upload failed.']);
+        }
+        exit;
     }
 }
 
 // Fetch messages between the logged-in user and the selected receiver
-$sql = "SELECT m.message_id, m.sender_id, m.receiver_id, m.message, m.timestamp,
+$sql = "SELECT m.message_id, m.sender_id, m.receiver_id, m.message, m.timestamp, m.attachment,
         CASE 
             WHEN m.sender_id = ? THEN 'outgoing' 
             ELSE 'incoming' 
@@ -91,105 +131,152 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <title>Chat with <?php echo $receiver_username; ?></title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        /* Your CSS styling */
-        body { 
-            font-family: 'Lato', sans-serif; 
-            background-color: #f4f4f4; 
-            margin: 0; 
-            padding: 0; 
-        }
-        .container { 
-            max-width: 600px; 
-            margin: 20px auto; 
-            background-color: white; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
-            padding: 20px; 
-        }
-        .back-button {
-            background-color: red; 
-            border: none; 
-            cursor: pointer; 
-            color: white; 
-            font-size: 1.1em; 
-            padding: 10px; 
-            border-radius: 5px;
-        }
-        .back-button:hover {
-            background-color: darkred;
-        }
-        .chat-window { 
-            padding: 10px; 
-        }
-        h1 { 
-            font-size: 1.5em; 
-            margin: 10px 0; 
-        }
-        .chat-history { 
-            max-height: 400px; 
-            overflow-y: auto; 
-            margin-bottom: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 5px; 
-            padding: 10px; 
-            background-color: #f9f9f9; 
-        }
-        .message { 
-            margin: 5px 0; 
-            padding: 10px; 
-            border-radius: 5px; 
-            position: relative; 
-        }
-        .outgoing { 
-            background-color: #e1ffc7; 
-            text-align: right; 
-        }
-        .incoming { 
-            background-color: #f1f1f1; 
-        }
-        .timestamp { 
-            font-size: 0.8em; 
-            color: #888; 
-            position: absolute; 
-            bottom: 5px; 
-            right: 10px; 
-        }
-        .message-input { 
-            display: flex; 
-            align-items: center; 
-        }
-        #messageInput { 
-            flex: 1; 
-            padding: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 5px; 
-            margin-right: 5px; 
-        }
-        #sendMessage { 
-            padding: 10px; 
-            border: none; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            background-color: #007bff; 
-            color: white; 
-        }
-        #sendMessage:hover { 
-            background-color: #0056b3; 
-        }
-        #attachmentButton { 
-            padding: 10px; 
-            border: none; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            background-color: #6c757d; 
-            color: white; 
-            margin-right: 5px;
-        }
-        #attachmentButton:hover { 
-            background-color: #5a6268; 
-        }
+        body {
+    font-family: 'Lato', sans-serif; 
+    background-color: #f4f4f4; 
+    margin: 0; 
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    flex-direction: column; 
+}
+
+.navbar {
+    width: 100%;
+    background-color: #333;
+    color: #fff;
+    padding: 15px;
+    text-align: center;
+    font-size: 1.2em;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.container { 
+    width: 90%; 
+    max-width: 600px; 
+    background-color: white; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+    padding: 20px; 
+    margin-top: 80px; /* Keep margin to avoid overlap with navbar */
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px;
+}
+
+.back-button {
+    align-self: flex-start;
+    background-color: #ff4d4d; 
+    border: none; 
+    cursor: pointer; 
+    color: white; 
+    font-size: 1em; 
+    padding: 8px 12px; 
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.back-button:hover {
+    background-color: #d93434;
+}
+
+.chat-window h1 { 
+    font-size: 1.3em; 
+    margin: 10px 0; 
+    color: #333;
+}
+
+.chat-history { 
+    max-height: 400px; 
+    overflow-y: auto; 
+    border: 1px solid #ddd; 
+    border-radius: 5px; 
+    padding: 15px; 
+    background-color: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Added gap for spacing between messages */
+}
+
+.message { 
+    margin: 8px 0; 
+    padding: 10px; 
+    border-radius: 5px; 
+    width: fit-content; 
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.outgoing { 
+    background-color: #cce5ff; 
+    align-self: flex-end; /* Align sender's messages to the right */
+    text-align: right;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+}
+
+.incoming { 
+    background-color: #e8e8e8; 
+    align-self: flex-start; /* Align receiver's messages to the left */
+    text-align: left;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+}
+
+.timestamp { 
+    font-size: 0.75em; 
+    color: #666; 
+    margin-top: 5px;
+}
+
+.message-input { 
+    display: flex; 
+    align-items: center; 
+    justify-content: flex-end; /* Aligns the input and button to the right */
+    gap: 5px;
+    margin-top: 10px;
+}
+
+#messageInput { 
+    flex: 1; 
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
+    width: 100%; 
+    margin-right: 5px;
+    font-size: 0.9em;
+}
+
+#sendTextMessage, #sendAttachment { 
+    padding: 10px 15px; 
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    color: white;
+    font-size: 0.9em;
+    transition: background-color 0.3s;
+}
+
+#sendTextMessage { 
+    background-color: #007bff; 
+}
+
+#sendTextMessage:hover { 
+    background-color: #0056b3; 
+}
+
+#sendAttachment { 
+    background-color: #6c757d; 
+}
+
+#sendAttachment:hover { 
+    background-color: #5a6268; 
+}
+
     </style>
 </head>
 <body>
@@ -197,53 +284,75 @@ $conn->close();
 <!-- Navigation Bar -->
 <?php include 'navbar.php'; ?>
 
-<!-- Back Button -->
 <div class="container">
     <button class="back-button" onclick="window.location.href='contacts.php'">Back</button>
-    <!-- Chat Window -->
     <div class="chat-window">
         <h1>Now chatting with <?php echo $receiver_username; ?></h1>
         <div class="chat-history">
-            <!-- Display messages dynamically -->
             <?php foreach ($messages as $message): ?>
                 <div class="message <?php echo $message['direction']; ?>">
-                    <p><?php echo htmlspecialchars($message['message']); ?></p>
+                    <?php if (!empty($message['message'])): ?>
+                        <p><?php echo htmlspecialchars($message['message']); ?></p>
+                    <?php endif; ?>
+                    <?php if ($message['attachment']): ?>
+                        <p><a href="<?php echo htmlspecialchars($message['attachment']); ?>" target="_blank">View Attachment</a></p>
+                    <?php endif; ?>
                     <div class="timestamp"><?php echo date("g:i A", strtotime($message['timestamp'])); ?></div>
                 </div>
             <?php endforeach; ?>
         </div>
-        <div class="message-input">
-            <input type="text" id="messageInput" placeholder="Type your message here..." required>
-            <button id="attachmentButton"><i class="fas fa-paperclip"></i></button>
-            <button id="sendMessage">Send</button>
-        </div>
+
+        <!-- Text Message Form -->
+        <form id="textMessageForm">
+            <input type="text" id="messageInput" name="message" placeholder="Type your message here..." required>
+            <button id="sendTextMessage">Send</button>
+        </form>
+
+        <!-- Attachment Form -->
+        <form id="attachmentForm" enctype="multipart/form-data">
+            <input type="file" id="attachment" name="attachment">
+            <button id="sendAttachment">Send Attachment</button>
+        </form>
     </div>
 </div>
 
 <script>
-document.getElementById('sendMessage').addEventListener('click', function() {
+// Send text message via AJAX
+document.getElementById('textMessageForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent the default form submission
     const message = document.getElementById('messageInput').value;
-    const receiver = "<?php echo $receiver_username; ?>"; // The username of the receiver
+    
+    fetch("", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `message=${encodeURIComponent(message)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Reload page to fetch new messages
+        } else {
+            alert(data.error || "Failed to send message.");
+        }
+    });
 
-    if (message) {
-        // Send the message via AJAX
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", "", true); // Send to the same page
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                // Reload the page to see the new message
-                location.reload();
-            }
-        };
-        xhr.send("message=" + encodeURIComponent(message) + "&receiver=" + encodeURIComponent(receiver));
-        document.getElementById('messageInput').value = ''; // Clear input
-    }
+    document.getElementById('messageInput').value = ''; // Clear input field
 });
 
-// Handle attachment button click (you can add your file handling logic here)
-document.getElementById('attachmentButton').addEventListener('click', function() {
-    alert("Attachment feature coming soon!"); // Placeholder for attachment logic
+// Send attachment via AJAX
+document.getElementById('attachmentForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    const formData = new FormData(this); // Use 'this' to reference the current form
+    
+    fetch("", { method: "POST", body: formData })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Reload page to fetch new messages
+        } else {
+            alert(data.error || "Failed to send attachment.");
+        }
+    });
 });
 </script>
 
