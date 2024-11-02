@@ -84,34 +84,42 @@ if (isset($_POST['download_pdf'])) {
     $pdf->Cell(0, 10, 'Date Range: ' . htmlspecialchars($startDate) . ' to ' . htmlspecialchars($endDate), 0, 1, 'C');
     $pdf->Ln(5);
 
-    // Report Summary
-    $pdf->Cell(50, 10, 'Total Requests:', 0, 0);
-    $pdf->Cell(50, 10, $totalRequests, 0, 1);
-    $pdf->Cell(50, 10, 'Approved Requests:', 0, 0);
-    $pdf->Cell(50, 10, $approvedRequests, 0, 1);
-    $pdf->Cell(50, 10, 'Rejected Requests:', 0, 0);
-    $pdf->Cell(50, 10, $rejectedRequests, 0, 1);
-    $pdf->Cell(50, 10, 'Total Requested Quantity:', 0, 0);
-    $pdf->Cell(50, 10, $requestedQuantity, 0, 1);
-    $pdf->Cell(50, 10, 'Delivered Quantity:', 0, 0);
-    $pdf->Cell(50, 10, $totalDeliveredQuantity, 0, 1);
+    // Report Summary Table
+    $pdf->SetFont('Arial', 'B', 12);
+    $pdf->Cell(0, 10, 'Report Summary', 0, 1);
+    $pdf->SetFont('Arial', '', 10);
+    $pdf->Cell(50, 10, 'Metric', 1, 0, 'C');
+    $pdf->Cell(50, 10, 'Value', 1, 1, 'C');
+    $pdf->Cell(50, 10, 'Total Requests', 1, 0);
+    $pdf->Cell(50, 10, $totalRequests, 1, 1);
+    $pdf->Cell(50, 10, 'Approved Requests', 1, 0);
+    $pdf->Cell(50, 10, $approvedRequests, 1, 1);
+    $pdf->Cell(50, 10, 'Rejected Requests', 1, 0);
+    $pdf->Cell(50, 10, $rejectedRequests, 1, 1);
+    $pdf->Cell(50, 10, 'Total Requested Quantity', 1, 0);
+    $pdf->Cell(50, 10, $requestedQuantity, 1, 1);
+    $pdf->Cell(50, 10, 'Delivered Quantity', 1, 0);
+    $pdf->Cell(50, 10, $totalDeliveredQuantity, 1, 1);
 
-    // NGO Data Breakdown
+    // NGO Data Breakdown Table
     $pdf->Ln(10);
     $pdf->SetFont('Arial', 'B', 12);
     $pdf->Cell(0, 10, 'NGO Request Breakdown', 0, 1);
     $pdf->SetFont('Arial', '', 10);
+    $pdf->Cell(60, 10, 'NGO Name', 1, 0, 'C');
+    $pdf->Cell(40, 10, 'Total Requests', 1, 0, 'C');
+    $pdf->Cell(40, 10, 'Approved Requests', 1, 1, 'C');
     foreach ($ngoData as $ngo) {
-        $pdf->Cell(50, 10, 'NGO Name: ' . $ngo['ngo_name'], 0, 1);
-        $pdf->Cell(50, 10, 'Total Requests: ' . $ngo['total_requests'], 0, 1);
-        $pdf->Cell(50, 10, 'Approved Requests: ' . $ngo['approved_requests'], 0, 1);
-        $pdf->Ln(5);
+        $pdf->Cell(60, 10, $ngo['ngo_name'], 1);
+        $pdf->Cell(40, 10, $ngo['total_requests'], 1);
+        $pdf->Cell(40, 10, $ngo['approved_requests'], 1, 1);
     }
 
     // Output the PDF
     $pdf->Output('D', 'FoodWasteRequestReport.pdf');
     exit;
 }
+
 ?>
 
 <!DOCTYPE html>

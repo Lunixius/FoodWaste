@@ -135,10 +135,6 @@
         <a href="order.php">Manage Delivery <i class="fas fa-shipping-fast"></i></a>
     </div>
     <div class="card">
-        <h2>Contact</h2>
-        <a href="admin_contacts.php">View Contacts <i class="fas fa-address-book"></i></a>
-    </div>
-    <div class="card">
         <h2>Report</h2>
         <a href="report.php">Generate Report <i class="fas fa-chart-line"></i></a>
     </div>

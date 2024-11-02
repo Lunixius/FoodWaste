@@ -1,3 +1,73 @@
+<?php
+// Initialize error message variable
+$error_message = "";
+
+// Database connection parameters
+$servername = "localhost";
+$db_username = "root";  // Replace with your database username
+$db_password = "";  // Replace with your database password
+$dbname = "foodwaste";
+
+// Create a database connection
+$conn = new mysqli($servername, $db_username, $db_password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Check if form data has been submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Collect and sanitize form inputs
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
+    $phone_number = trim($_POST['phone_number']);
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
+    $user_type = $_POST['user_type'];
+
+    // Validate inputs
+    if (empty($username) || empty($email) || empty($phone_number) || empty($password) || empty($confirm_password) || empty($user_type)) {
+        $error_message = "All fields are required.";
+    } elseif ($password !== $confirm_password) {
+        $error_message = "Passwords do not match.";
+    } else {
+        // Check if the username or email already exists
+        $check_query = "SELECT * FROM user WHERE username = ? OR email = ?";
+        $stmt = $conn->prepare($check_query);
+        $stmt->bind_param("ss", $username, $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $error_message = "Username or email already exists.";
+        } else {
+            // Hash the password before storing
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+            // Prepare insert query
+            $insert_query = "INSERT INTO user (username, email, phone_number, password, user_type) VALUES (?, ?, ?, ?, ?)";
+            $stmt = $conn->prepare($insert_query);
+            $stmt->bind_param("sssss", $username, $email, $phone_number, $hashed_password, $user_type);
+
+            // Execute the insert query
+            if ($stmt->execute()) {
+                // Redirect to user login page after successful registration
+                header("Location: user_login.php");
+                exit();
+            } else {
+                $error_message = "Error: " . $stmt->error;
+            }
+        }
+
+        // Close the statement
+        $stmt->close();
+    }
+}
+
+// Close the database connection
+$conn->close();
+?>
 <!DOCTYPE html>
 <html>
 <head>

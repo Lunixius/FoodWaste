@@ -101,6 +101,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
+// Handle editing a message
+if (isset($_POST['edit_message_id']) && isset($_POST['new_message_text'])) {
+    $edit_message_id = intval($_POST['edit_message_id']);
+    $new_message_text = htmlspecialchars($_POST['new_message_text']);
+
+    $sql = "UPDATE messages SET message = ? WHERE message_id = ? AND sender_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("sii", $new_message_text, $edit_message_id, $logged_in_user_id);
+
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Failed to edit message.']);
+    }
+    $stmt->close();
+    exit;
+}
+
+// Handle deleting a message
+if (isset($_POST['delete_message_id'])) {
+    $delete_message_id = intval($_POST['delete_message_id']);
+
+    $sql = "DELETE FROM messages WHERE message_id = ? AND sender_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $delete_message_id, $logged_in_user_id);
+
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Failed to delete message.']);
+    }
+    $stmt->close();
+    exit;
+}
+
+
 // Fetch messages between the logged-in user and the selected receiver
 $sql = "SELECT m.message_id, m.sender_id, m.receiver_id, m.message, m.timestamp, m.attachment,
         CASE 
@@ -277,6 +313,33 @@ $conn->close();
     background-color: #5a6268; 
 }
 
+.edit-button, .delete-button {
+    margin-top: 5px;
+    padding: 5px 10px;
+    font-size: 0.8em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.edit-button {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.delete-button {
+    background-color: #f44336;
+    color: white;
+}
+
+.edit-button:hover {
+    background-color: #45a049;
+}
+
+.delete-button:hover {
+    background-color: #d32f2f;
+}
+
     </style>
 </head>
 <body>
@@ -292,12 +355,21 @@ $conn->close();
             <?php foreach ($messages as $message): ?>
                 <div class="message <?php echo $message['direction']; ?>">
                     <?php if (!empty($message['message'])): ?>
-                        <p><?php echo htmlspecialchars($message['message']); ?></p>
+                        <p class="message-text" data-message-id="<?php echo $message['message_id']; ?>">
+                            <?php echo htmlspecialchars($message['message']); ?>
+                        </p>
                     <?php endif; ?>
                     <?php if ($message['attachment']): ?>
                         <p><a href="<?php echo htmlspecialchars($message['attachment']); ?>" target="_blank">View Attachment</a></p>
                     <?php endif; ?>
-                    <div class="timestamp"><?php echo date("g:i A", strtotime($message['timestamp'])); ?></div>
+                    <!-- Format timestamp to include both date and time -->
+                    <div class="timestamp"><?php echo date("F j, Y, g:i A", strtotime($message['timestamp'])); ?></div>
+
+                    <!-- Show edit and delete buttons only for outgoing messages -->
+                    <?php if ($message['direction'] === 'outgoing'): ?>
+                        <button class="edit-button" onclick="editMessage(<?php echo $message['message_id']; ?>)">Edit</button>
+                        <button class="delete-button" onclick="deleteMessage(<?php echo $message['message_id']; ?>)">Delete</button>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -354,6 +426,48 @@ document.getElementById('attachmentForm').addEventListener('submit', function(ev
         }
     });
 });
+
+// Edit message function
+function editMessage(messageId) {
+    const messageText = document.querySelector(`.message-text[data-message-id='${messageId}']`).textContent;
+    const newMessage = prompt("Edit your message:", messageText);
+
+    if (newMessage !== null) {
+        fetch("", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `edit_message_id=${messageId}&new_message_text=${encodeURIComponent(newMessage)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Refresh to show the updated message
+            } else {
+                alert(data.error || "Failed to edit message.");
+            }
+        });
+    }
+}
+
+// Delete message function
+function deleteMessage(messageId) {
+    if (confirm("Are you sure you want to delete this message?")) {
+        fetch("", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `delete_message_id=${messageId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Refresh to remove the deleted message
+            } else {
+                alert(data.error || "Failed to delete message.");
+            }
+        });
+    }
+}
+
 </script>
 
 </body>

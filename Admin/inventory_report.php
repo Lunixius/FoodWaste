@@ -9,6 +9,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Variables initialization
 $total_donations = 0;
 $total_delivered = 0;
 $remaining_inventory = 0;
@@ -23,6 +24,7 @@ if ($start_date && $end_date) {
     $date_filter = "WHERE date_created BETWEEN '$start_date' AND '$end_date'";
 }
 
+// Queries
 $query_total_donations = "SELECT SUM(quantity) AS total_donations FROM inventory";
 $result_total_donations = $conn->query($query_total_donations);
 if ($result_total_donations && $row = $result_total_donations->fetch_assoc()) {
@@ -47,12 +49,15 @@ if ($result_request_status) {
 
 $query_category_breakdown = "SELECT category, SUM(quantity) AS total_quantity FROM inventory GROUP BY category";
 $result_category_breakdown = $conn->query($query_category_breakdown);
+$total_category_quantity = 0;
 if ($result_category_breakdown) {
     while ($row = $result_category_breakdown->fetch_assoc()) {
+        $total_category_quantity += $row['total_quantity'];
         $category_data[] = $row;
     }
 }
 
+// If download PDF is requested
 if (isset($_POST['download_pdf'])) {
     $pdf = new FPDF();
     $pdf->AddPage();
@@ -60,34 +65,48 @@ if (isset($_POST['download_pdf'])) {
     $pdf->Cell(0, 10, 'Food Waste Report - Inventory', 0, 1, 'C');
     $reportTitle = $start_date && $end_date ? "$start_date - $end_date" : "Food Waste Report";
     $pdf->Cell(0, 10, $reportTitle, 0, 1, 'C');
-
-    $pdf->SetFont('Arial', '', 12);
     $pdf->Ln(10);
+
+    // Report Summary Table
+    $pdf->SetFont('Arial', 'B', 12);
     $pdf->Cell(0, 10, 'Report Summary', 0, 1, 'L');
     $pdf->SetFont('Arial', '', 10);
-
-    // Display date range
-    if ($start_date && $end_date) {
-        $pdf->Cell(0, 10, 'Date Range: ' . $start_date . ' to ' . $end_date, 0, 1, 'L');
-    }
-
-    $pdf->Cell(0, 10, 'Total Donations: ' . ($total_donations ? $total_donations : 0), 0, 1);
-    $pdf->Cell(0, 10, 'Total Delivered: ' . ($total_delivered ? $total_delivered : 0), 0, 1);
-    $pdf->Cell(0, 10, 'Remaining Inventory: ' . ($remaining_inventory ? $remaining_inventory : 0), 0, 1);
-
+    $pdf->Cell(50, 10, 'Total Donations', 1);
+    $pdf->Cell(50, 10, $total_donations ? $total_donations : 0, 1);
+    $pdf->Cell(50, 10, 'Total Delivered', 1);
+    $pdf->Cell(50, 10, $total_delivered ? $total_delivered : 0, 1);
+    $pdf->Cell(50, 10, 'Remaining Inventory', 1);
+    $pdf->Cell(50, 10, $remaining_inventory ? $remaining_inventory : 0, 1);
     $pdf->Ln(10);
+
+    // Request Status Breakdown Table
     $pdf->SetFont('Arial', 'B', 12);
     $pdf->Cell(0, 10, 'Request Status Breakdown', 0, 1);
     $pdf->SetFont('Arial', '', 10);
-    $pdf->Cell(50, 10, 'Approved: ' . $request_status['approved'], 0, 1);
-    $pdf->Cell(50, 10, 'Rejected: ' . $request_status['rejected'], 0, 1);
-
+    $pdf->Cell(50, 10, 'Status', 1);
+    $pdf->Cell(50, 10, 'Count', 1, 1);
+    $pdf->Cell(50, 10, 'Approved', 1);
+    $pdf->Cell(50, 10, $request_status['approved'], 1, 1);
+    $pdf->Cell(50, 10, 'Rejected', 1);
+    $pdf->Cell(50, 10, $request_status['rejected'], 1, 1);
     $pdf->Ln(10);
+
+    // Calculate Category Percentage for Breakdown
+    $total_inventory = array_sum(array_column($category_data, 'total_quantity'));
+    
+    // Category Breakdown Table with Percentage
     $pdf->SetFont('Arial', 'B', 12);
     $pdf->Cell(0, 10, 'Category Breakdown', 0, 1);
     $pdf->SetFont('Arial', '', 10);
+    $pdf->Cell(50, 10, 'Category', 1);
+    $pdf->Cell(50, 10, 'Quantity', 1);
+    $pdf->Cell(50, 10, 'Percentage', 1, 1);
+
     foreach ($category_data as $category) {
-        $pdf->Cell(50, 10, $category['category'] . ': ' . $category['total_quantity'], 0, 1);
+        $category_percentage = $total_inventory ? round(($category['total_quantity'] / $total_inventory) * 100, 2) : 0;
+        $pdf->Cell(50, 10, $category['category'], 1);
+        $pdf->Cell(50, 10, $category['total_quantity'], 1);
+        $pdf->Cell(50, 10, $category_percentage . '%', 1, 1);
     }
 
     $pdf->Output('D', 'FoodWasteReport.pdf');

@@ -39,3 +39,15 @@ Include formulas to calculate total requests, which category of food is in highe
 
 Inventory and Requests, 2 types 
 Another column for remaining quantity.
+
+A food waste report should contain:
+
+    Total Donations: The amount of food donated.
+    Total Delivered: The amount of food successfully delivered.
+    Total Wasted: The amount of food that went to waste.
+    Remaining Inventory: The quantity of food still available.
+    Expiry Dates: Track items nearing or past expiration.
+    Category Breakdown: Food waste categorized by type (e.g., Fruits, Dairy, etc.).
+    Donor and NGO Data: Contributions from restaurants and requests from NGOs.
+    Request/Delivery Status: Approved, pending, or rejected requests.
+    Time-Based Data: Date range of donations, requests, and wastage.

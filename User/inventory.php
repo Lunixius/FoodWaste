@@ -250,12 +250,13 @@ $conn->close();
                         <td><?php echo htmlspecialchars($row['expiry_date']); ?></td>
                         <td><?php echo htmlspecialchars($row['quantity']); ?></td>
                         <td>
-                            <?php if (!empty($row['picture'])): ?>
-                                <img src="uploads/<?php echo htmlspecialchars($row['picture']); ?>" alt="Image" class="inventory-image">
-                            <?php else: ?>
-                                No picture
-                            <?php endif; ?>
-                        </td>
+    <?php if (!empty($row['picture'])): ?>
+        <button class="btn btn-link" onclick="window.open('upload/<?php echo htmlspecialchars($row['picture']); ?>', '_blank');">View Image</button>
+    <?php else: ?>
+        No picture
+    <?php endif; ?>
+</td>
+
                         <td><?php echo htmlspecialchars($row['donor']); ?></td>
                         <td><?php echo htmlspecialchars($row['date_created']); ?></td>
                         <td><?php echo htmlspecialchars($row['last_modified']); ?></td>

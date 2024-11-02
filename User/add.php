@@ -209,9 +209,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="date" class="form-control" id="expiry_date" name="expiry_date" required>
             </div>
             <div class="form-group">
-                <label for="picture">Picture (Optional)</label>
-                <input type="file" class="form-control" id="picture" name="picture" accept=".jpg,.jpeg,.png">
-            </div>
+    <label for="picture">Picture</label>
+    <input type="file" class="form-control" id="picture" name="picture" accept=".jpg,.jpeg,.png" required>
+</div>
             <button type="submit" class="btn btn-primary">Add Inventory</button>
         </form>
     </div>
