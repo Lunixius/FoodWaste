@@ -15,6 +15,7 @@ $total_delivered = 0;
 $remaining_inventory = 0;
 $category_data = [];
 $request_status = ['approved' => 0, 'rejected' => 0];
+$totalRequests = $approvedRequests = $pendingRequests = $rejectedRequests = $fulfilledRequests = $requestedQuantity = $totalDeliveredQuantity = 0;
 
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
@@ -57,6 +58,23 @@ if ($result_category_breakdown) {
     }
 }
 
+$requestQuery = "
+    SELECT 
+        COUNT(*) AS total_requests,
+        SUM(requested_quantity) AS requested_quantity
+    FROM requests";
+
+$result = $conn->query($requestQuery);
+if ($result) {
+    $data = $result->fetch_assoc();
+    $totalRequests = $data['total_requests'];
+    $requestedQuantity = $data['requested_quantity'];
+} else {
+    // Handle query error
+    $totalRequests = 0;
+    $requestedQuantity = 0;
+}
+
 // If download PDF is requested
 if (isset($_POST['download_pdf'])) {
     $pdf = new FPDF();
@@ -68,16 +86,23 @@ if (isset($_POST['download_pdf'])) {
     $pdf->Ln(10);
 
     // Report Summary Table
-    $pdf->SetFont('Arial', 'B', 12);
-    $pdf->Cell(0, 10, 'Report Summary', 0, 1, 'L');
-    $pdf->SetFont('Arial', '', 10);
-    $pdf->Cell(50, 10, 'Total Donations', 1);
-    $pdf->Cell(50, 10, $total_donations ? $total_donations : 0, 1);
-    $pdf->Cell(50, 10, 'Total Delivered', 1);
-    $pdf->Cell(50, 10, $total_delivered ? $total_delivered : 0, 1);
-    $pdf->Cell(50, 10, 'Remaining Inventory', 1);
-    $pdf->Cell(50, 10, $remaining_inventory ? $remaining_inventory : 0, 1);
-    $pdf->Ln(10);
+$pdf->SetFont('Arial', 'B', 12);
+$pdf->Cell(0, 10, 'Report Summary', 0, 1, 'L');
+$pdf->SetFont('Arial', '', 10);
+
+// Total Donations row
+$pdf->Cell(50, 10, 'Total Donations', 1, 0, 'L');
+$pdf->Cell(50, 10, $total_donations ? $total_donations : 0, 1, 1, 'L');
+
+// Total Delivered row
+$pdf->Cell(50, 10, 'Total Delivered', 1, 0, 'L');
+$pdf->Cell(50, 10, $total_delivered ? $total_delivered : 0, 1, 1, 'L');
+
+// Remaining Inventory row
+$pdf->Cell(50, 10, 'Remaining Inventory', 1, 0, 'L');
+$pdf->Cell(50, 10, $remaining_inventory ? $remaining_inventory : 0, 1, 1, 'L');
+
+$pdf->Ln(10); // Space after the summary table
 
     // Request Status Breakdown Table
     $pdf->SetFont('Arial', 'B', 12);
@@ -85,6 +110,11 @@ if (isset($_POST['download_pdf'])) {
     $pdf->SetFont('Arial', '', 10);
     $pdf->Cell(50, 10, 'Status', 1);
     $pdf->Cell(50, 10, 'Count', 1, 1);
+    $pdf->Cell(50, 10, 'Total Requests', 1, 0);
+    $pdf->Cell(50, 10, $totalRequests, 1, 1);
+
+    $pdf->Cell(50, 10, 'Total Requested Quantity', 1, 0);
+    $pdf->Cell(50, 10, $requestedQuantity, 1, 1);
     $pdf->Cell(50, 10, 'Approved', 1);
     $pdf->Cell(50, 10, $request_status['approved'], 1, 1);
     $pdf->Cell(50, 10, 'Rejected', 1);
@@ -102,12 +132,18 @@ if (isset($_POST['download_pdf'])) {
     $pdf->Cell(50, 10, 'Quantity', 1);
     $pdf->Cell(50, 10, 'Percentage', 1, 1);
 
-    foreach ($category_data as $category) {
-        $category_percentage = $total_inventory ? round(($category['total_quantity'] / $total_inventory) * 100, 2) : 0;
-        $pdf->Cell(50, 10, $category['category'], 1);
-        $pdf->Cell(50, 10, $category['total_quantity'], 1);
-        $pdf->Cell(50, 10, $category_percentage . '%', 1, 1);
-    }
+    // Sort $category_data array by total_quantity in descending order
+usort($category_data, function($a, $b) {
+    return $b['total_quantity'] <=> $a['total_quantity'];
+});
+
+// Iterate through sorted category data
+foreach ($category_data as $category) {
+    $category_percentage = $total_inventory ? round(($category['total_quantity'] / $total_inventory) * 100, 2) : 0;
+    $pdf->Cell(50, 10, $category['category'], 1);
+    $pdf->Cell(50, 10, $category['total_quantity'], 1);
+    $pdf->Cell(50, 10, $category_percentage . '%', 1, 1);
+}
 
     $pdf->Output('D', 'FoodWasteReport.pdf');
     exit;
@@ -137,10 +173,12 @@ if (isset($_POST['download_pdf'])) {
             border-radius: 10px;
         }
         .chart-container {
-            position: relative;
-            width: 100%; /* Full width */
-            height: 400px; /* Set a fixed height */
-        }
+    position: relative;
+    width: 45%; /* Adjust to 45% width for each chart */
+    height: 400px; /* Maintain desired height */
+    display: inline-block; /* Display charts side-by-side */
+    margin-right: 10px; /* Add margin for spacing */
+  }
         h2 {
             color: #007bff;
             text-align: center;
@@ -188,12 +226,14 @@ if (isset($_POST['download_pdf'])) {
     <div class="row">
         <div class="col-md-6">
             <h5>Total Donations: <?php echo $total_donations ? $total_donations : 0; ?></h5>
-            <h5>Total Delivered: <?php echo $total_delivered ? $total_delivered : 0; ?></h5>
             <h5>Remaining Inventory: <?php echo $remaining_inventory ? $remaining_inventory : 0; ?></h5>
+            <h5>Total Delivered: <?php echo $total_delivered ? $total_delivered : 0; ?></h5>
         </div>
         <div class="col-md-6">
             <h5>Request Status:</h5>
             <ul>
+                <li>Total Requests: <?= $totalRequests ?></li>
+                <li>Total Requested Quantity: <?= $requestedQuantity ?></li>
                 <li>Approved: <?php echo $request_status['approved']; ?></li>
                 <li>Rejected: <?php echo $request_status['rejected']; ?></li>
             </ul>
@@ -222,28 +262,38 @@ if (isset($_POST['download_pdf'])) {
 <script>
 // Data for Category Breakdown Pie Chart
 const categoryData = {
-    labels: <?php echo json_encode(array_column($category_data, 'category')); ?>,
-    datasets: [{
-        label: 'Inventory by Category',
-        data: <?php echo json_encode(array_column($category_data, 'total_quantity')); ?>,
-        backgroundColor: ['#007bff', '#dc3545', '#ffc107', '#28a745', '#17a2b8', '#6f42c1', '#e83e8c', '#fd7e14'],
-        borderWidth: 1
-    }]
+  labels: <?php echo json_encode(array_column($category_data, 'category')); ?>,
+  datasets: [{
+    label: 'Inventory by Category',
+    data: <?php echo json_encode(array_column($category_data, 'total_quantity')); ?>,
+    backgroundColor: ['#007bff', '#dc3545', '#ffc107', '#28a745', '#17a2b8', '#6f42c1', '#e83e8c', '#fd7e14'],
+    borderWidth: 1,
+    datalabels: { // New property for data label formatting
+      formatter: (value, context) => {
+        const total = context.dataset.data.reduce((a, b) => a + b, 0); // Calculate total
+        const percentage = (value / total) * 100;
+        return `${value} (${percentage.toFixed(1)}%)`; // Format with value and percentage
+      }
+    }
+  }]
 };
 
 // Options for Pie Chart
 const categoryOptions = {
-    responsive: true,
-    maintainAspectRatio: false, // Allow the chart to resize
-    plugins: {
-        legend: {
-            position: 'top',
-        },
-        title: {
-            display: true,
-            text: 'Inventory by Category'
-        }
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'top',
+    },
+    title: {
+      display: true,
+      text: 'Inventory by Category'
     }
+  },
+  datalabels: { // New option to hide default data labels (optional)
+    display: false
+  }
 };
 
 // Data for Request Status Bar Chart
@@ -286,35 +336,11 @@ const categoryPieChart = new Chart(
 const statusBarChart = new Chart(
     document.getElementById('statusBarChart'),
     {
-        type: 'bar',
+        type: 'pie',
         data: statusData,
         options: statusOptions
     }
 );
-
-// Function to capture the charts and send them to the server
-function captureCharts() {
-    const pieChartCanvas = document.getElementById('categoryPieChart');
-    const barChartCanvas = document.getElementById('statusBarChart');
-
-    // Convert charts to Data URL
-    const pieChartImage = pieChartCanvas.toDataURL('image/png');
-    const barChartImage = barChartCanvas.toDataURL('image/png');
-
-    // Set images in a hidden form to send to server
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.innerHTML = `
-        <input type="hidden" name="chart_images" value='${JSON.stringify([pieChartImage, barChartImage])}'>
-    `;
-    
-    document.body.appendChild(form);
-    form.submit();
-}
-
-// Call the function when the PDF button is clicked
-document.querySelector('button[name="download_pdf"]').addEventListener('click', captureCharts);
-
 </script>
 
 </body>

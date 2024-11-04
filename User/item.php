@@ -223,7 +223,7 @@ $conn->close();
                         <td><?php echo htmlspecialchars($row['quantity']); ?></td>
                         <td>
                             <?php if (!empty($row['picture'])): ?>
-                                <img src="uploads/<?php echo htmlspecialchars($row['picture']); ?>" alt="Image" class="inventory-image">
+                                <button class="btn btn-link" onclick="window.open('upload/<?php echo htmlspecialchars($row['picture']); ?>', '_blank');">View Image</button>
                             <?php else: ?>
                                 No picture
                             <?php endif; ?>
