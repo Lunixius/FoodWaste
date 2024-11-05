@@ -132,7 +132,7 @@
     </div>
     <div class="card">
         <h2>Delivery</h2>
-        <a href="order.php">Manage Delivery <i class="fas fa-shipping-fast"></i></a>
+        <a href="order.php">View Delivery <i class="fas fa-shipping-fast"></i></a>
     </div>
     <div class="card">
         <h2>Report</h2>
