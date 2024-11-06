@@ -123,13 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <h2 class="mb-4">Deliver/Pickup Information</h2>
 
-        <!-- Display success message if set -->
-        <?php if (isset($success_message)): ?>
-            <div class="alert alert-success">
-                <?php echo $success_message; ?>
-            </div>
-        <?php endif; ?>
-
         <!-- Display request details -->
         <?php if (isset($row)): ?>
             <div class="mb-3">
@@ -183,6 +176,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <!-- New button to redirect to confirm.php for viewing orders -->
                 <a href="<?php echo ($user_type === 'NGO') ? 'confirmed.php' : 'confirm.php'; ?>" class="btn btn-info" style="margin-left: 10px;">View Orders</a>
             </div>
+
+        <!-- Display success message if set -->
+        <?php if (isset($success_message)): ?>
+            <div class="alert alert-success">
+                <?php echo $success_message; ?>
+            </div>
+        <?php endif; ?>
 
         </form>
     </div>
