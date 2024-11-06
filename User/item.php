@@ -249,10 +249,6 @@ $conn->close();
             </tbody>
         </table>
 
-        <!-- Full-screen image modal -->
-        <div id="image-modal">
-            <img src="" alt="Full Screen Image">
-        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -270,20 +266,6 @@ $conn->close();
                     row.style.display = 'none';
                 }
             });
-        });
-
-        // Full-screen image viewer
-        document.querySelectorAll('.inventory-image').forEach(function(img) {
-            img.addEventListener('click', function() {
-                var src = this.getAttribute('src');
-                var modal = document.getElementById('image-modal');
-                modal.querySelector('img').setAttribute('src', src);
-                modal.style.display = 'block';
-            });
-        });
-
-        document.getElementById('image-modal').addEventListener('click', function() {
-            this.style.display = 'none';
         });
 
         // Confirm Request Function

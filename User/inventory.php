@@ -37,6 +37,12 @@ if ($user_type !== 'Restaurant') {
     exit();
 }
 
+// Fetch all inventory items with date_created and last_modified
+$inventory_query = $conn->prepare("SELECT id, name, category, expiry_date, quantity, picture, donor, date_created, last_modified FROM inventory WHERE donor = ?");
+$inventory_query->bind_param("s", $username);
+$inventory_query->execute();
+$inventory_result = $inventory_query->get_result();
+
 // Handle delete request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $delete_id = $_POST['delete_id'];
@@ -65,12 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $delete_query->close();
     exit();  // End script after processing delete request
 }
-
-// Fetch all inventory items with date_created and last_modified
-$inventory_query = $conn->prepare("SELECT id, name, category, expiry_date, quantity, picture, donor, date_created, last_modified FROM inventory WHERE donor = ?");
-$inventory_query->bind_param("s", $username);
-$inventory_query->execute();
-$inventory_result = $inventory_query->get_result();
 
 // Close database connection
 $conn->close();
@@ -250,12 +250,12 @@ $conn->close();
                         <td><?php echo htmlspecialchars($row['expiry_date']); ?></td>
                         <td><?php echo htmlspecialchars($row['quantity']); ?></td>
                         <td>
-    <?php if (!empty($row['picture'])): ?>
-        <button class="btn btn-link" onclick="window.open('upload/<?php echo htmlspecialchars($row['picture']); ?>', '_blank');">View Image</button>
-    <?php else: ?>
-        No picture
-    <?php endif; ?>
-</td>
+                            <?php if (!empty($row['picture'])): ?>
+                                <button class="btn btn-link" onclick="window.open('upload/<?php echo htmlspecialchars($row['picture']); ?>', '_blank');">View Image</button>
+                            <?php else: ?>
+                                No picture
+                            <?php endif; ?>
+                        </td>
 
                         <td><?php echo htmlspecialchars($row['donor']); ?></td>
                         <td><?php echo htmlspecialchars($row['date_created']); ?></td>
@@ -281,10 +281,6 @@ $conn->close();
         </table>
     </div>
 
-    <div id="image-modal" onclick="this.style.display='none'">
-        <img src="" alt="Full Image" id="full-image">
-    </div>
-
     <div id="delete-message"></div>
 
     <script>
@@ -302,20 +298,9 @@ $conn->close();
             });
         });
 
-        // Handle image click for full-screen view
-        const images = document.querySelectorAll('.inventory-image');
-        images.forEach(img => {
-            img.addEventListener('click', function () {
-                const modal = document.getElementById('image-modal');
-                const fullImage = document.getElementById('full-image');
-                fullImage.src = this.src;
-                modal.style.display = 'block';
-            });
-        });
-
         // AJAX deletion handler
-document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', function (e) {
+        document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function (e) {
         e.preventDefault(); // Prevent the form from submitting normally
 
         const deleteId = this.querySelector('input[name="delete_id"]').value;
