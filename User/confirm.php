@@ -26,7 +26,8 @@ $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name,
                 r.address, r.delivery_completed
           FROM requests r
           JOIN inventory i ON r.id = i.id
-          JOIN user u ON i.donor = u.username";
+          JOIN user u ON i.donor = u.username;
+          WHERE r.status != 'rejected'";
 $result = $conn->query($query);
 
 // Handle confirmation for delivery
