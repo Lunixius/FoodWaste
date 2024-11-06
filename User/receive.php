@@ -65,23 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $success_message = "Pickup confirmed successfully!";
 }
 
-// Handle cancellation of confirmation
-if (isset($_POST['cancel_confirmation'])) {
-    // Check which user is canceling the confirmation
-    if ($role === 'restaurant') {
-        $cancel_query = "UPDATE requests SET restaurant_confirmed = 0 WHERE request_id = ?";
-    } elseif ($role === 'ngo') {
-        $cancel_query = "UPDATE requests SET ngo_confirmed = 0 WHERE request_id = ?";
-    }
-
-    $cancel_stmt = $conn->prepare($cancel_query);
-    $cancel_stmt->bind_param("i", $request_id);
-    $cancel_stmt->execute();
-
-    // Refresh the page to reflect the updated status
-    header("Location: receive.php?request_id=$request_id");
-    exit;
-}
 ?>
 
 <!DOCTYPE html>
