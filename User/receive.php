@@ -138,7 +138,7 @@ if (isset($_POST['cancel_confirmation'])) {
 <body>
     <?php include 'navbar.php'; ?>
     <div class="container">
-        <h2 class="mb-4">Pickup Information</h2>
+        <h2 class="mb-4">Deliver/Pickup Information</h2>
 
         <!-- Display success message if set -->
         <?php if (isset($success_message)): ?>
