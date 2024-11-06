@@ -141,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php include 'navbar.php'; ?>
 
 <div class="container">
-    <h2>Delivery Completion</h2>
+    <h2>Delivery/Pickup Completion</h2>
     <table class="table table-bordered">
         <thead>
             <tr>

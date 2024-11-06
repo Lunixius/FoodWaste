@@ -100,7 +100,7 @@ $result = $conn->query($query);
 <?php include 'navbar.php'; ?>
 
 <div class="container">
-    <h2>Confirm Delivery Requests</h2>
+    <h2>Delivery/Pickup Completion</h2>
     <table class="table table-bordered">
         <thead>
             <tr>
