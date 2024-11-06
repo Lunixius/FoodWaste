@@ -3,7 +3,12 @@
 $conn = new mysqli('localhost', 'root', '', 'foodwaste');
 session_start();
 
-// Fetch user info
+// Check if user is logged in and fetch user info
+if (!isset($_SESSION['user_id'])) {
+    echo "Access denied. Please log in to view this page.";
+    exit();
+}
+
 $user_id = $_SESSION['user_id'];
 $user_query = $conn->prepare("SELECT username, user_type FROM user WHERE id = ?");
 $user_query->bind_param("i", $user_id);
@@ -13,20 +18,20 @@ $user = $user_result->fetch_assoc();
 $username = $user['username'];
 $user_type = $user['user_type'];
 
-// If not logged in as Restaurant, restrict access
+// Restrict access to Restaurant users
 if ($user_type !== 'Restaurant') {
     echo "Access denied. Only Restaurant users can view this page.";
     exit();
 }
 
-// Fetch all requests from the requests table
+// Fetch all requests excluding rejected ones
 $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name, 
                 i.category, i.donor AS restaurant_username, u.phone_number AS restaurant_phone, 
                 r.ngo_name, r.requested_quantity, r.receive_method, r.receive_time, 
                 r.address, r.delivery_completed
           FROM requests r
           JOIN inventory i ON r.id = i.id
-          JOIN user u ON i.donor = u.username;
+          JOIN user u ON i.donor = u.username
           WHERE r.status != 'rejected'";
 $result = $conn->query($query);
 
@@ -34,9 +39,8 @@ $result = $conn->query($query);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $request_id = $_POST['request_id'];
 
-    // Check if the request is being confirmed by the NGO
+    // Update delivery confirmation
     if (isset($_POST['confirm_delivery'])) {
-        // Update delivery confirmation
         $update_query = "UPDATE requests SET delivery_completed = 'completed' WHERE request_id = ?";
         $update_stmt = $conn->prepare($update_query);
         $update_stmt->bind_param("i", $request_id);
@@ -44,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Refresh the page or redirect
         header("Location: confirm.php");
-        exit;
+        exit();
     }
 }
 ?>
@@ -54,8 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirm Requests</title>
-    <!-- Poppins Font and Bootstrap -->
+    <title>Confirm Delivery Requests</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -93,16 +96,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: #f9f9f9;
         }
         .row-completed {
-            background-color: #d4edda; /* Light green background for completed rows */
+            background-color: #d4edda;
         }
-        /* Styling for Delivery Status */
         .status-pending {
-            color: #ffa500; /* Orange for Pending */
+            color: #ffa500;
             font-weight: bold;
         }
         .status-completed {
-            color: #28a745; /* Green for Completed */
+            color: #28a745;
             font-weight: bold;
+        }
+        .btn-confirm {
+            background-color: #28a745;
+            color: white;
         }
     </style>
 </head>
@@ -111,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php include 'navbar.php'; ?>
 
 <div class="container">
-    <h2>Delivery Completion</h2>
+    <h2>Confirm Delivery Requests</h2>
     <table class="table table-bordered">
         <thead>
             <tr>
@@ -125,7 +131,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <th>Receive Method</th>
                 <th>Receive Time</th>
                 <th>Address</th>
-                <th>Delivery Status</th> <!-- Add Delivery Status column header -->
+                <th>Delivery Status</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -145,6 +152,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span class="<?php echo ($row['delivery_completed'] === 'completed') ? 'status-completed' : 'status-pending'; ?>">
                             <?php echo ($row['delivery_completed'] === 'completed') ? 'Completed' : 'Pending'; ?>
                         </span>
+                    </td>
+                    <td>
+                        <?php if ($row['delivery_completed'] !== 'completed'): ?>
+                            <form method="POST" action="confirm.php">
+                                <input type="hidden" name="request_id" value="<?php echo $row['request_id']; ?>">
+                                <button type="submit" name="confirm_delivery" class="btn btn-confirm">Confirm</button>
+                            </form>
+                        <?php else: ?>
+                            <span>Confirmed</span>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endwhile; ?>
