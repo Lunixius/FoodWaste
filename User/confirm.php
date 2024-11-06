@@ -34,23 +34,6 @@ $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name,
           JOIN user u ON i.donor = u.username
           WHERE r.status != 'rejected'";
 $result = $conn->query($query);
-
-// Handle confirmation for delivery
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $request_id = $_POST['request_id'];
-
-    // Update delivery confirmation
-    if (isset($_POST['confirm_delivery'])) {
-        $update_query = "UPDATE requests SET delivery_completed = 'completed' WHERE request_id = ?";
-        $update_stmt = $conn->prepare($update_query);
-        $update_stmt->bind_param("i", $request_id);
-        $update_stmt->execute();
-
-        // Refresh the page or redirect
-        header("Location: confirm.php");
-        exit();
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -132,7 +115,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <th>Receive Time</th>
                 <th>Address</th>
                 <th>Delivery Status</th>
-                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -152,16 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span class="<?php echo ($row['delivery_completed'] === 'completed') ? 'status-completed' : 'status-pending'; ?>">
                             <?php echo ($row['delivery_completed'] === 'completed') ? 'Completed' : 'Pending'; ?>
                         </span>
-                    </td>
-                    <td>
-                        <?php if ($row['delivery_completed'] !== 'completed'): ?>
-                            <form method="POST" action="confirm.php">
-                                <input type="hidden" name="request_id" value="<?php echo $row['request_id']; ?>">
-                                <button type="submit" name="confirm_delivery" class="btn btn-confirm">Confirm</button>
-                            </form>
-                        <?php else: ?>
-                            <span>Confirmed</span>
-                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endwhile; ?>
