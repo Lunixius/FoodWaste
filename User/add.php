@@ -76,6 +76,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $insert_query = $conn->prepare("INSERT INTO inventory (name, category, quantity, expiry_date, picture, donor) VALUES (?, ?, ?, ?, ?, ?)");
     $insert_query->bind_param("ssisss", $name, $category, $quantity, $expiry_date, $picture, $username);
     
+    // Check if quantity is a valid positive integer
+    if (!filter_var($quantity, FILTER_VALIDATE_INT, ["options" => ["min_range" => 1]])) {
+        echo "Invalid quantity. Please enter a positive integer.";
+        exit();
+    }
+
     if ($insert_query->execute()) {
         // Fetch the last inserted ID (Entity ID)
         $entity_id = $conn->insert_id;
@@ -181,6 +187,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php include 'navbar.php'; ?>
 
     <div class="container">
+        <!-- Back Button -->
+    <div class="d-flex justify-content-start mb-3">
+        <a href="inventory.php" class="btn btn-secondary">Back</a>
+    </div>
+
         <h2>Add Inventory Item</h2>
         <form action="add.php" method="POST" enctype="multipart/form-data">
             <div class="form-group">
@@ -216,6 +227,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js">
+        
+        document.getElementById('quantity').addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-999]/g, ''); // Allows only digits
+        });
+
+    </script>
 </body>
 </html>

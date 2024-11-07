@@ -295,11 +295,12 @@ $conn->close();
                 <option value="ngo">NGO</option>
             </select>
 
+            <p>Don't have an account? <a href="user_register.php">Register here</a></p>
+            <p><a href="user_forgot_password.php">Forgot Password?</a></p>
+
             <button type="submit">Login</button>
         </form>
 
-        <p>Don't have an account? <a href="user_register.php">Register here</a></p>
-        <p><a href="user_forgot_password.php">Forgot Password?</a></p>
     </div>
 </body>
 </html>
