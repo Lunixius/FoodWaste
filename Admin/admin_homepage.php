@@ -131,8 +131,8 @@
         <a href="manage_requests.php">Manage Requests <i class="fas fa-tasks"></i></a>
     </div>
     <div class="card">
-        <h2>Delivery</h2>
-        <a href="order.php">View Delivery <i class="fas fa-shipping-fast"></i></a>
+        <h2>Orders</h2>
+        <a href="order.php">View Orders <i class="fas fa-shipping-fast"></i></a>
     </div>
     <div class="card">
         <h2>Report</h2>
