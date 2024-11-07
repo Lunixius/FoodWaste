@@ -236,7 +236,7 @@ $conn->close();
 
 <?php include 'admin_navbar.php'; ?>
 
-<h1>Pending Password Change Requests</h1>
+<h1>Password Change Requests</h1>
 
 <!-- Notification box for messages -->
 <?php if ($notification): ?>
