@@ -121,6 +121,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <?php include 'navbar.php'; ?>
     <div class="container">
+
+    <div class="d-flex justify-content-start mb-3">
+        <a href="delivery.php" class="btn btn-secondary">Back</a>
+    </div>
+
         <h2 class="mb-4">Deliver/Pickup Information</h2>
 
         <!-- Display request details -->
