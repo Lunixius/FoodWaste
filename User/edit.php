@@ -214,10 +214,7 @@ $conn->close();
 
             <div class="form-group">
                 <label for="picture">Picture:</label>
-                <div class="file-input-container">
-                    <button>Select Picture</button>
-                    <input type="file" class="form-control" id="picture" name="picture" accept=".jpg,.jpeg,.png">
-                </div>
+            
                 <?php if (!empty($item['picture'])): ?>
                     <div class="inventory-image-preview mt-3">
                         <img src="upload/<?php echo htmlspecialchars($item['picture']); ?>" alt="Current Image">
@@ -228,6 +225,14 @@ $conn->close();
                         <p class="text-muted">No image uploaded.</p>
                     </div>
                 <?php endif; ?>
+                
+                <div class="form-group">
+            <label for="picture">Picture *</label>
+            <input type="file" class="form-control" id="picture" name="picture" accept=".jpg,.jpeg,.png" required>
+            <?php if (!empty($inventory['picture'])): ?>
+                <p>Current picture: <img src="upload/<?php echo htmlspecialchars($inventory['picture']); ?>" alt="Image" width="100"></p>
+            <?php endif; ?>
+
             </div>
 
             <div class="buttons-container">
