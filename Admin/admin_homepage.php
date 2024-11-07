@@ -142,8 +142,6 @@
         <h2>Upload Report</h2>
         <a href="admin_upload_report.php">Upload Attachment <i class="fas fa-upload"></i></a>
     </div>
-
-    <!-- Card for Password Reset -->
     <div class="card">
         <h2>User Password Reset</h2>
         <a href="manage_user_passwords.php">User Password<i class="fas fa-lock"></i></a>
