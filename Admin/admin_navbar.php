@@ -96,7 +96,7 @@ if (isset($_POST['logout'])) {
                     <a class="nav-link" href="manage_requests.php">Requests</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="order.php">Delivery</a>
+                    <a class="nav-link" href="order.php">Orders</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="report.php">Report</a>
