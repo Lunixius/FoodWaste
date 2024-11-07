@@ -27,7 +27,7 @@ $query = "SELECT r.request_id, r.id AS inventory_id, r.name AS item_name,
           FROM requests r
           JOIN inventory i ON r.id = i.id
           JOIN user u ON i.donor = u.username
-          WHERE r.status != 'rejected'"; // Exclude rejected requests
+          WHERE r.status NOT IN ('rejected', 'cancelled')"; 
 $result = $conn->query($query);
 
 // Handle confirmation for delivery
