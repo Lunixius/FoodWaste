@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update'])) {
     $quantity = (int)$_POST['quantity'];
 
     // Handle file upload
+    $picture_filename = null;
     if (isset($_FILES['picture']) && $_FILES['picture']['error'] == 0) {
         $picture = $_FILES['picture'];
         $upload_dir = 'upload/';
@@ -55,18 +56,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update'])) {
         // Move the uploaded file
         if (move_uploaded_file($picture['tmp_name'], $upload_file)) {
             $picture_filename = basename($picture['name']);
-        } else {
-            $picture_filename = null;
         }
-    } else {
-        $picture_filename = null;
     }
 
     // Update inventory item in the database
     if ($picture_filename) {
+        // Update with new picture
         $query = $conn->prepare("UPDATE inventory SET name = ?, category = ?, expiry_date = ?, quantity = ?, picture = ? WHERE id = ? AND donor = ?");
         $query->bind_param("sssssis", $name, $category, $expiry_date, $quantity, $picture_filename, $id, $username);
     } else {
+        // Update without changing the picture
         $query = $conn->prepare("UPDATE inventory SET name = ?, category = ?, expiry_date = ?, quantity = ? WHERE id = ? AND donor = ?");
         $query->bind_param("ssssis", $name, $category, $expiry_date, $quantity, $id, $username);
     }
@@ -106,7 +105,6 @@ $user_query->close();
 $conn->close();
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -125,13 +123,43 @@ $conn->close();
         .container {
             margin-top: 50px;
         }
-        .inventory-image {
-            max-width: 300px;
-            max-height: 300px;
-            object-fit: cover;
+        .inventory-image-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             border: 1px solid #ddd;
-            padding: 5px;
+            padding: 15px;
             border-radius: 5px;
+            background-color: #f9f9f9;
+            max-width: 300px;
+            margin-top: 15px;
+        }
+        .inventory-image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+        .file-input-container {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input-container button {
+            border: none;
+            color: white;
+            background-color: #007bff;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .file-input-container input[type="file"] {
+            position: absolute;
+            font-size: 100px;
+            opacity: 0;
+            right: 0;
+            top: 0;
         }
         .form-group {
             margin-bottom: 15px;
@@ -185,63 +213,27 @@ $conn->close();
             </div>
 
             <div class="form-group">
-            <label for="picture">Picture *</label>
-            <input type="file" class="form-control" id="picture" name="picture" accept=".jpg,.jpeg,.png" required>
-            <?php if (!empty($inventory['picture'])): ?>
-                <p>Current picture: <img src="upload/<?php echo htmlspecialchars($inventory['picture']); ?>" alt="Image" width="100"></p>
-            <?php endif; ?>
-        </div>
+                <label for="picture">Picture:</label>
+                <div class="file-input-container">
+                    <button>Select Picture</button>
+                    <input type="file" class="form-control" id="picture" name="picture" accept=".jpg,.jpeg,.png">
+                </div>
+                <?php if (!empty($item['picture'])): ?>
+                    <div class="inventory-image-preview mt-3">
+                        <img src="upload/<?php echo htmlspecialchars($item['picture']); ?>" alt="Current Image">
+                        <p class="text-muted mt-2">Current Image Preview</p>
+                    </div>
+                <?php else: ?>
+                    <div class="inventory-image-preview mt-3">
+                        <p class="text-muted">No image uploaded.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
 
             <div class="buttons-container">
                 <button type="submit" name="update" class="btn btn-primary">Update Inventory</button>
                 <a href="inventory.php" class="btn btn-secondary cancel-button">Cancel</a>
             </div>
         </form>
-
-        <!-- Confirmation and success messages -->
-        <div id="confirmation-message" class="alert alert-warning mt-3" style="display: none;">
-            Are you sure you want to update this item?
-        </div>
-        <div id="success-message" class="alert alert-success mt-3" style="display: none;">
-            Inventory item updated successfully.
-        </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js">
-        document.querySelector('form').addEventListener('submit', function(event) {
-            event.preventDefault();  // Prevent the default form submission
-            var confirmationMessage = document.getElementById('confirmation-message');
-            var successMessage = document.getElementById('success-message');
-            
-            confirmationMessage.style.display = 'block';
-            
-            if (confirm('Are you sure you want to update this item?')) {
-                var formData = new FormData(this);
-                fetch('edit.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        confirmationMessage.style.display = 'none';
-                        successMessage.style.display = 'block';
-                        setTimeout(function() {
-                            window.location.href = 'inventory.php';
-                        }, 2000);
-                    } else {
-                        confirmationMessage.style.display = 'none';
-                        alert('Failed to update inventory item.');
-                    }
-                })
-                .catch(error => {
-                    confirmationMessage.style.display = 'none';
-                    alert('An error occurred while updating the inventory item.');
-                });
-            } else {
-                confirmationMessage.style.display = 'none';
-            }
-        });
-    </script>
 </body>
-</html>
