@@ -296,7 +296,7 @@ const categoryOptions = {
   }
 };
 
-// Data for Request Status Bar Chart
+// Data for Request Status Pie Chart
 const statusData = {
     labels: ['Approved', 'Rejected'],
     datasets: [{
@@ -307,7 +307,7 @@ const statusData = {
     }]
 };
 
-// Options for Bar Chart
+// Options for Pie Chart
 const statusOptions = {
     responsive: true,
     maintainAspectRatio: false, // Allow the chart to resize
