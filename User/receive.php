@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="delivery.php" class="btn btn-secondary">Back</a>
     </div>
 
-        <h2 class="mb-4">DeliverY/Pickup Information</h2>
+        <h2 class="mb-4">Delivery/Pickup Information</h2>
 
         <!-- Display request details -->
         <?php if (isset($row)): ?>
