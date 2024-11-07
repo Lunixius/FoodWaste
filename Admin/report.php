@@ -80,7 +80,7 @@ if (isset($_POST['download_pdf'])) {
     $pdf = new FPDF();
     $pdf->AddPage();
     $pdf->SetFont('Arial', 'B', 16);
-    $pdf->Cell(0, 10, 'Food Waste Report - Inventory', 0, 1, 'C');
+    $pdf->Cell(0, 10, 'Food Waste Report', 0, 1, 'C');
     $reportTitle = $start_date && $end_date ? "$start_date - $end_date" : "Food Waste Report";
     $pdf->Cell(0, 10, $reportTitle, 0, 1, 'C');
     $pdf->Ln(10);
