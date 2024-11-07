@@ -360,7 +360,7 @@ $conn->close();
                         </p>
                     <?php endif; ?>
                     <?php if ($message['attachment']): ?>
-                        <p><a href="<?php echo htmlspecialchars($message['attachment']); ?>" target="_blank">View Attachment</a></p>
+                        <p><a href="<?php echo htmlspecialchars($message['attachment']); ?>" target="_blank"><?php echo htmlspecialchars(substr(basename($message['attachment']), 0, 8)); ?></a></p>
                     <?php endif; ?>
                     <!-- Format timestamp to include both date and time -->
                     <div class="timestamp"><?php echo date("F j, Y, g:i A", strtotime($message['timestamp'])); ?></div>
