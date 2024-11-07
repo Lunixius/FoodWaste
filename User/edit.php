@@ -227,7 +227,7 @@ $conn->close();
                 <?php endif; ?>
                 
                 <div class="form-group">
-            <label for="picture">Picture *</label>
+            <label for="picture">New Picture *</label>
             <input type="file" class="form-control" id="picture" name="picture" accept=".jpg,.jpeg,.png" required>
             <?php if (!empty($inventory['picture'])): ?>
                 <p>Current picture: <img src="upload/<?php echo htmlspecialchars($inventory['picture']); ?>" alt="Image" width="100"></p>

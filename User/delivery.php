@@ -88,7 +88,7 @@ $result = $stmt->get_result();
     <?php include 'navbar.php'; ?>
 
     <div class="container">
-        <h2>Approved Delivery Requests</h2>
+        <h2>Approved Requests</h2>
         <table class="table table-bordered">
             <thead>
                 <tr>
