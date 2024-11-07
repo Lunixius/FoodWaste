@@ -10,6 +10,9 @@ if ($conn->connect_error) {
 // Start the session to check for admin login
 session_start();
 
+// Fetch distinct categories for the filter
+$category_result = $conn->query("SELECT DISTINCT category FROM inventory");
+
 // Fetch inventory items from the database
 $inventory_result = $conn->query("SELECT * FROM inventory");
 
@@ -48,39 +51,26 @@ $conn->close();
         }
 
         table {
-    width: 100%;
-    margin-top: 20px;
-    border-collapse: collapse; /* Ensure borders are not doubled */
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
 
-table th, table td {
-    text-align: center;
-    padding: 12px;
-    border: 1px solid #ddd; /* Add a solid border */
-}
+        table th, table td {
+            text-align: center;
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
 
-th {
-    background-color: #f2f2f2;
-    font-weight: 500;
-}
+        th {
+            background-color: #f2f2f2;
+            font-weight: 500;
+        }
 
-tr {
-    transition: background-color 0.3s ease;
-}
-
-tr:hover {
-    background-color: #f5f5f5;
-}
-
-td {
-    background-color: #fff;
-    border-bottom: 1px solid #ddd;
-}
-
-td:last-child {
-    border-right: 0;
-}
+        tr:hover {
+            background-color: #f5f5f5;
+        }
 
         /* Mobile responsive design */
         @media (max-width: 768px) {
@@ -97,6 +87,20 @@ td:last-child {
             }
         }
     </style>
+    <script>
+        function filterByCategory() {
+            const selectedCategory = document.getElementById('categoryFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('table tbody tr');
+            rows.forEach(row => {
+                const categoryCell = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                if (selectedCategory === 'all' || categoryCell === selectedCategory) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -104,6 +108,22 @@ td:last-child {
 
     <div class="container">
         <h2>View Inventory</h2>
+
+        <!-- Category Filter Dropdown -->
+        <div class="mb-3">
+            <label for="categoryFilter" class="form-label">Filter by Category:</label>
+            <select id="categoryFilter" class="form-select" onchange="filterByCategory()">
+                <option value="all">All Categories</option>
+                <?php
+                if ($category_result && $category_result->num_rows > 0) {
+                    while ($category_row = $category_result->fetch_assoc()) {
+                        echo "<option value=\"" . htmlspecialchars($category_row['category']) . "\">" . htmlspecialchars($category_row['category']) . "</option>";
+                    }
+                }
+                ?>
+            </select>
+        </div>
+
         <table class="table table-bordered">
             <thead>
                 <tr>
