@@ -163,7 +163,7 @@ $conn->close();
                 echo "<td>" . htmlspecialchars($row['request_date']) . "</td>";
                 echo "<td>";
                 
-                // Aaction buttons 
+                // Action buttons 
                 if ($row['status'] === 'pending') {
                     echo "
                         <div class='action-form'>
