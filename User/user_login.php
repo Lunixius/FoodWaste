@@ -15,6 +15,13 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Check if user is already logged in
+if (isset($_SESSION['username'])) {
+    // Redirect to the homepage if logged in
+    header("Location: user_homepage.php");
+    exit();
+}
+
 // Initialize error message
 $error_message = '';
 $password_change_status = '';
@@ -23,7 +30,7 @@ $username_requesting_change = '';
 // Check if there is a password change request pending
 if (isset($_SESSION['username'])) {
     $username = $_SESSION['username'];
-    $status_query = $conn->prepare("SELECT username, status FROM password_change_requests WHERE username = ? ORDER BY request_date DESC LIMIT 1");
+    $status_query = $conn->prepare("SELECT user_id, status FROM password_change_requests WHERE user_id = ? ORDER BY request_date DESC LIMIT 1");
     $status_query->bind_param("s", $username);
     $status_query->execute();
     $status_result = $status_query->get_result();

@@ -1,6 +1,12 @@
 <?php
 session_start();
 
+// Check if admin is already logged in
+if (isset($_SESSION['admin_id'])) {
+    header("Location: admin_homepage.php");
+    exit();
+}
+
 // Database connection parameters
 $servername = "localhost";
 $db_username = "root";
@@ -48,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
