@@ -31,11 +31,6 @@ $user = $user_result->fetch_assoc();
 $username = $user['username'];
 $user_type = $user['user_type'];
 
-// If not logged in as restaurant, restrict access
-if ($user_type !== 'Restaurant') {
-    echo "Access denied. Only restaurant users can view this page.";
-    exit();
-}
 
 // Fetch all inventory items with date_created and last_modified
 $inventory_query = $conn->prepare("SELECT id, name, category, expiry_date, quantity, picture, donor, date_created, last_modified FROM inventory WHERE donor = ?");

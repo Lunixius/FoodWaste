@@ -31,12 +31,6 @@ $user = $user_result->fetch_assoc();
 $username = $user['username'];
 $user_type = $user['user_type'];
 
-// If not logged in as NGO, restrict access
-if ($user_type !== 'NGO') {
-    echo "Access denied. Only NGO users can view this page.";
-    exit();
-}
-
 // Fetch all inventory items that are not expired
 $inventory_query = $conn->prepare("SELECT id, name, category, expiry_date, quantity, picture, donor, date_created, last_modified FROM inventory WHERE expiry_date >= CURDATE()");
 $inventory_query->execute();

@@ -6,6 +6,7 @@ if (session_status() == PHP_SESSION_NONE) {
 // Check if user is logged in
 if (isset($_SESSION['username'])) {
     $username = htmlspecialchars($_SESSION['username']);
+
     // Fetch user type from the database
     $servername = "localhost";
     $db_username = "root";  // Replace with your database username
@@ -14,46 +15,40 @@ if (isset($_SESSION['username'])) {
 
     // Create a database connection
     $conn = new mysqli($servername, $db_username, $db_password, $dbname);
-    
-    // Check if the connection was successful
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
     }
 
-    // Fetch user type
     $user_type_query = $conn->prepare("SELECT user_type FROM user WHERE username = ?");
     $user_type_query->bind_param("s", $username);
     $user_type_query->execute();
     $user_type_result = $user_type_query->get_result();
     $user = $user_type_result->fetch_assoc();
-    $user_type = htmlspecialchars($user['user_type']); // Store user type for display
+    $user_type = htmlspecialchars($user['user_type']);
 
-    
+    $user_type_query->close();
+    $conn->close();
+
     // Logout logic
     if (isset($_POST['logout']) && $_POST['logout'] == 1) {
-        // Destroy session and redirect to login page
         session_destroy();
-        header("Location: user_login.php"); // Replace with your login page
+        header("Location: user_login.php");
         exit();
     }
-
-    // Close the database connection
-    $conn->close();
 } else {
-    $username = "Guest"; // Default for not logged in
+    $username = "Guest";
     $user_type = "N/A";
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Bar</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -61,48 +56,54 @@ if (isset($_SESSION['username'])) {
 
         .navbar {
             background-color: #000; /* Black background */
-            padding: 15px;
-            width: 100%;
+        }
+
+        .navbar .nav-link {
+            color: white;
+            font-weight: 500;
+        }
+
+        .navbar .nav-link:hover {
+            color: #f8f9fa;
+            text-decoration: underline;
+        }
+
+        .navbar .profile-link {
+            color: white;
+            font-weight: bold;
+            margin-right: 20px;
+        }
+
+        .navbar .logout-icon {
+            color: red;
+            font-size: 1.5rem;
+            cursor: pointer;
         }
 
         .user-info {
-            background-color: white; /* White background */
-            padding: 5px 10px; /* Padding for user info */
-            border-radius: 5px; /* Rounded corners */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Shadow for depth */
-            font-size: 14px; /* Font size */
-            color: #333; /* Text color */
-            margin-right: 15px; /* Margin for spacing */
-        }
-
-        .profile-text {
-            color: white;
-            font-weight: bold;
-            font-size: 20px;
-            margin-right: 20px; /* Space between profile text and logout icon */
-        }
-
-        .logout-icon {
-            font-size: 25px;
-            color: red;
-            cursor: pointer;
+            color: #fff;
+            font-size: 1rem;
+            margin-right: 20px;
         }
     </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-            <!-- User Info Container at the most left -->
-            <div class="user-info d-flex align-items-center">
-                <strong><?php echo $username; ?></strong>
-                <small class="ms-2"><?php echo $user_type; ?></small>
+            <!-- User Info -->
+            <div class="user-info">
+                <strong><?php echo $username; ?></strong> 
+                <span>(<?php echo $user_type; ?>)</span>
             </div>
 
-            <div class="collapse navbar-collapse justify-content-center" id="navbarNavDropdown">
-                <ul class="navbar-nav">
+            <!-- Navbar Links -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="user_homepage.php">Home</a>
+                        <a class="nav-link active" href="user_homepage.php">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo ($user_type === 'NGO') ? 'item.php' : 'inventory.php'; ?>">Inventory</a>
@@ -127,24 +128,20 @@ if (isset($_SESSION['username'])) {
                 </ul>
             </div>
 
-            <!-- Profile Text -->
-            <div class="profile-text">
-                <a href="user_profile.php" style="text-decoration: none; color: inherit;">Profile</a>
-            </div>
-
-            <!-- Logout Button -->
+            <!-- Profile and Logout -->
+            <a href="user_profile.php" class="profile-link">Profile</a>
             <div class="logout-icon" onclick="document.getElementById('logoutForm').submit();">
                 <i class="fa-solid fa-power-off"></i>
             </div>
         </div>
     </nav>
 
-    <!-- Hidden Logout Form -->
+    <!-- Logout Form -->
     <form id="logoutForm" method="post" action="">
         <input type="hidden" name="logout" value="1">
     </form>
 
-    <!-- Move Bootstrap JS to the end of the body to ensure proper initialization -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
