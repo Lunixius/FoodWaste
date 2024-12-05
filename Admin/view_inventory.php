@@ -132,6 +132,7 @@ $conn->close();
                     <th>Category</th>
                     <th>Quantity</th>
                     <th>Expiry Date</th>
+                    <th>Picture</th>
                     <th>Donor</th>
                 </tr>
             </thead>
@@ -145,11 +146,12 @@ $conn->close();
                         echo "<td>" . htmlspecialchars($row['category']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['quantity']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['expiry_date']) . "</td>";
+                        echo "<td><a href=\"../User/upload/" . htmlspecialchars($row['picture']) . "\" target=\"_blank\">View Image</a></td>";
                         echo "<td>" . htmlspecialchars($row['donor']) . "</td>";
                         echo "</tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='6' class='text-center'>No inventory items found.</td></tr>";
+                    echo "<tr><td colspan='7' class='text-center'>No inventory items found.</td></tr>";
                 }
                 ?>
             </tbody>
